@@ -7,6 +7,15 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowRight, Code2, Database, Zap, Trophy, Terminal } from "lucide-react"
 import { useEffect, useState } from "react"
+import Image from "next/image"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+import Autoplay from "embla-carousel-autoplay"
 
 // Animated Counter Component
 function AnimatedCounter({ end, duration = 2 }: { end: number; duration?: number }) {
@@ -289,6 +298,9 @@ export function HeroSection() {
           transition={{ duration: 0.8 }}
           className="space-y-8"
         >
+          {/* Logo */}
+         
+
           {/* Badge with stagger animation */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -383,59 +395,71 @@ export function HeroSection() {
           </motion.div>
         </motion.div>
 
-        {/* Right image with parallax 3D effect */}
+        {/* Right carousel with images */}
         <motion.div
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.8 }}
           className="flex justify-center"
         >
-          <div className="relative w-full max-w-md aspect-square group" style={{ perspective: "1000px" }}>
-            {/* Glowing border animation */}
-            <motion.div
-              animate={{
-                boxShadow: [
-                  "0 0 20px rgba(99, 102, 241, 0.3)",
-                  "0 0 40px rgba(99, 102, 241, 0.6)",
-                  "0 0 20px rgba(99, 102, 241, 0.3)",
-                ],
-              }}
-              transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
-              className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-3xl opacity-30 blur-3xl"
-            />
+          <div className="relative w-full max-w-md">
+            <Carousel className="w-full" plugins={[Autoplay()]}>
+              <CarouselContent>
+                {["/img.png", "/img2.png", "/img3.png", "/img4.png"].map((src, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative aspect-square group" style={{ perspective: "1000px" }}>
+                      {/* Glowing border animation */}
+                      <motion.div
+                        animate={{
+                          boxShadow: [
+                            "0 0 20px rgba(99, 102, 241, 0.3)",
+                            "0 0 40px rgba(99, 102, 241, 0.6)",
+                            "0 0 20px rgba(99, 102, 241, 0.3)",
+                          ],
+                        }}
+                        transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+                        className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-3xl opacity-30 blur-3xl"
+                      />
 
-            {/* Main image with hover parallax */}
-            <motion.div
-              whileHover={{ scale: 1.08, rotateY: 5, rotateX: 5 }}
-              transition={{ duration: 0.3 }}
-              style={{
-                rotateX: mousePosition.y * 10 - 5,
-                rotateY: mousePosition.x * -10 + 5,
-              }}
-              className="relative w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-primary/20"
-            >
-              <img
-                src="/img.png"
-                alt="Gh0sT Tech Instructor"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-            </motion.div>
+                      {/* Image with hover parallax */}
+                      <motion.div
+                        whileHover={{ scale: 1.08, rotateY: 5, rotateX: 5 }}
+                        transition={{ duration: 0.3 }}
+                        style={{
+                          rotateX: mousePosition.y * 10 - 5,
+                          rotateY: mousePosition.x * -10 + 5,
+                        }}
+                        className="relative w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-primary/20"
+                      >
+                        <img
+                          src={src}
+                          alt={`Gh0sT Tech Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                      </motion.div>
 
-            {/* Before/After slider overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="absolute bottom-4 left-4 right-4 bg-background/80 backdrop-blur-md rounded-lg p-3 border border-primary/30"
-            >
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground/70">Interactive Learning</span>
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}>
-                  <Trophy className="w-4 h-4 text-accent" />
-                </motion.div>
-              </div>
-            </motion.div>
+                      {/* Overlay */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1 }}
+                        className="absolute bottom-4 left-4 right-4 bg-background/80 backdrop-blur-md rounded-lg p-3 border border-primary/30"
+                      >
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-foreground/70">Interactive Learning</span>
+                          <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}>
+                            <Trophy className="w-4 h-4 text-accent" />
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </motion.div>
       </div>

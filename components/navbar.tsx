@@ -42,7 +42,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="#home" className="flex items-center gap-2 group">
-          <motion.div whileHover={{ scale: 1.1 }} className="w-10 h-10 relative">
+          <motion.div whileHover={{ scale: 1.1 }} className="w-26 h-16 relative">
             <Image
               src="/logo.png"
               alt="Gh0sT Tech Logo"
