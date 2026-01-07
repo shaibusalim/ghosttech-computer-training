@@ -62,7 +62,7 @@ export function AboutInstructor() {
                 whileHover={{ scale: 1.05 }}
                 className="relative w-full aspect-square rounded-3xl shadow-2xl overflow-hidden border border-accent/20"
               >
-                <img src="/instructor-face.png" alt="Instructor" className="w-full h-full object-cover object-top" />
+                <img src="/instructor-face.png" alt="Instructor" className="w-full h-full object-cover " />
               </motion.div>
             </div>
           </motion.div>
