@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 
@@ -41,11 +42,13 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="#home" className="flex items-center gap-2 group">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center font-bold text-primary-foreground"
-          >
-            GT
+          <motion.div whileHover={{ scale: 1.1 }} className="w-10 h-10 relative">
+            <Image
+              src="/logo.png"
+              alt="Gh0sT Tech Logo"
+              fill
+              className="object-contain"
+            />
           </motion.div>
           <span className="font-bold text-lg hidden sm:inline">Gh0sT Tech</span>
         </Link>

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,17 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <Card className="w-full max-w-sm border-primary/20 bg-card/60 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 relative">
+                <Image
+                  src="/logo.png"
+                  alt="Gh0sT Tech Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
             <CardTitle className="text-2xl">Admin Login</CardTitle>
           </CardHeader>
           <CardContent>

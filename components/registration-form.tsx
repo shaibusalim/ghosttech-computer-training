@@ -103,10 +103,10 @@ export function RegistrationForm() {
         description: "Registration submitted. Check your email for confirmation.",
       })
 
-      // Reset form
+      // Reset form after 15 seconds
       setTimeout(() => {
         window.location.reload()
-      }, 3000)
+      }, 15000)
     } catch (error) {
       console.error("[v0] Registration error:", error)
       toast({

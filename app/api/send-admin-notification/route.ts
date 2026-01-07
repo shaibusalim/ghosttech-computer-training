@@ -107,7 +107,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Gh0sT Tech <noreply@ghost-tech.com>",
+        from: "Gh0sT Tech <noreply@resend.dev>",
         to: [adminEmail],
         subject: `🚨 New Student Registration: ${full_name}`,
         html: emailHTML,
