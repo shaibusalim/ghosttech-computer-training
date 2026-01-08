@@ -26,7 +26,6 @@ export function RegistrationForm() {
     whatsapp_number: "",
     email: "",
     location: "",
-    course_selection: "",
     previous_knowledge: "",
   })
 
@@ -35,9 +34,7 @@ export function RegistrationForm() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, course_selection: value }))
-  }
+
 
   const handleRadioChange = (value: string) => {
     setFormData((prev) => ({ ...prev, previous_knowledge: value }))
@@ -55,7 +52,6 @@ export function RegistrationForm() {
         !formData.whatsapp_number ||
         !formData.email ||
         !formData.location ||
-        !formData.course_selection ||
         !formData.previous_knowledge
       ) {
         toast({
@@ -75,7 +71,7 @@ export function RegistrationForm() {
         whatsapp_number: formData.whatsapp_number,
         email: formData.email,
         location: formData.location,
-        course_selection: formData.course_selection,
+        course_selection: "All Courses",
         previous_knowledge: formData.previous_knowledge === "yes",
         status: "pending",
         created_at: new Date().toISOString(),
@@ -90,7 +86,7 @@ export function RegistrationForm() {
           body: JSON.stringify({
             email: formData.email,
             full_name: formData.full_name,
-            course_selection: formData.course_selection,
+            course_selection: "All Courses",
           }),
         })
 
@@ -115,7 +111,6 @@ export function RegistrationForm() {
           whatsapp_number: "",
           email: "",
           location: "",
-          course_selection: "",
           previous_knowledge: "",
         })
         setIsSuccess(false)
@@ -240,17 +235,16 @@ export function RegistrationForm() {
             </div>
 
             <div className="space-y-3">
-              <Label>Select a Course</Label>
-              <Select value={formData.course_selection} onValueChange={handleSelectChange}>
-                <SelectTrigger className="bg-input border-border/50 focus:border-primary/50 transition-colors">
-                  <SelectValue placeholder="Choose a course" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hardware">Computer Hardware</SelectItem>
-                  <SelectItem value="software">Software & System Management</SelectItem>
-                  <SelectItem value="networking">Networking Basics</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Courses Included</Label>
+              <div className="bg-input border border-border/50 rounded-md p-4 space-y-2">
+                <p className="text-sm font-medium">Our comprehensive training covers:</p>
+                <ul className="text-sm space-y-1 ml-4">
+                  <li>• Computer Hardware</li>
+                  <li>• Software & System Management</li>
+                  <li>• Networking Basics</li>
+                </ul>
+                <p className="text-xs text-foreground/70 mt-2">All courses are included in the GHS 700 package.</p>
+              </div>
             </div>
 
             <div className="space-y-3">

@@ -23,10 +23,10 @@ export function FloatingWhatsApp() {
         rel="noopener noreferrer"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-xl cursor-pointer !transition-none"
+        className="md:w-16 md:h-16 w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-xl cursor-pointer !transition-none"
         style={{ animation: 'none', transition: 'none', transform: 'none' }}
       >
-        <MessageCircle className="w-8 h-8 text-white" />
+        <MessageCircle className="md:w-8 md:h-8 w-6 h-6 text-white" />
       </a>
     </div>
   )
