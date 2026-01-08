@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { getClientDb } from "@/lib/firebase/client"
 import { collection, addDoc } from "firebase/firestore"
@@ -103,7 +104,7 @@ export function RegistrationForm() {
         description: "Registration submitted. Check your email for confirmation.",
       })
 
-      // Reset form
+      // Reset form after dialog closes
       setTimeout(() => {
         setFormData({
           full_name: "",
@@ -114,7 +115,7 @@ export function RegistrationForm() {
           previous_knowledge: "",
         })
         setIsSuccess(false)
-      }, 3000)
+      }, 5000)
     } catch (error) {
       console.error("[v0] Unexpected error:", error)
       toast({
@@ -125,27 +126,6 @@ export function RegistrationForm() {
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  if (isSuccess) {
-    return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <Card className="border-primary/50 bg-gradient-to-br from-primary/20 to-accent/10 max-w-md w-full">
-          <CardContent className="pt-12 text-center space-y-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle className="w-12 h-12 text-primary-foreground" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold mb-2">Registration Successful!</h3>
-              <p className="text-foreground/70">Thank you for registering. Please check your email for confirmation.</p>
-            </div>
-            <p className="text-sm text-foreground/50">
-              We will contact you shortly regarding payment and class schedule.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (
@@ -204,7 +184,7 @@ export function RegistrationForm() {
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleInputChange}
-                  placeholder="0541120274"
+                  placeholder="0551234567"
                   className="bg-input border-border/50 focus:border-primary/50 transition-colors"
                 />
               </div>
@@ -216,7 +196,7 @@ export function RegistrationForm() {
                   name="whatsapp_number"
                   value={formData.whatsapp_number}
                   onChange={handleInputChange}
-                  placeholder="0209832978"
+                  placeholder="0249876543"
                   className="bg-input border-border/50 focus:border-primary/50 transition-colors"
                 />
               </div>
@@ -287,6 +267,29 @@ export function RegistrationForm() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Success Dialog */}
+      <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-center justify-center">
+              <CheckCircle className="w-6 h-6 text-green-500" />
+              Registration Successful!
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Thank you for registering. Please check your email for confirmation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              We will contact you shortly regarding payment and class schedule.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }
