@@ -14,7 +14,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import Autoplay from "embla-carousel-autoplay"
 
 // Counter Component (no animation)
 function Counter({ end }: { end: number }) {
@@ -219,7 +218,7 @@ export function HeroSection() {
         {/* Right carousel with images */}
         <div className="flex justify-center">
           <div className="relative w-full max-w-md">
-            <Carousel className="w-full" plugins={[Autoplay()]}>
+            <Carousel className="w-full">
               <CarouselContent>
                 {["/img.png", "/img2.png", "/img3.png", "/img4.png"].map((src, index) => (
                   <CarouselItem key={index}>
