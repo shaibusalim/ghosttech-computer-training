@@ -125,44 +125,28 @@
   }
 }
 
-/* Added comprehensive animation keyframes for hero effects */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(20px);
-  }
+/* Prevent animations on fixed navbar and WhatsApp button */
+nav[class*="fixed"],
+nav[class*="fixed"] *,
+div[class*="fixed"][class*="bottom-6"][class*="right-6"],
+div[class*="fixed"][class*="bottom-6"][class*="right-6"] *,
+button[class*="md:hidden"][class*="text-foreground"],
+a[class*="w-16"][class*="h-16"][class*="bg-gradient-to-br"] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
 }
 
-@keyframes glow-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
-  }
-}
-
-@keyframes text-shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@keyframes gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+/* On mobile, disable all transitions for fixed elements */
+@media (max-width: 768px) {
+  nav[class*="fixed"],
+  nav[class*="fixed"] *,
+  div[class*="fixed"][class*="z-50"],
+  div[class*="fixed"][class*="z-50"] *,
+  button[class*="md:hidden"],
+  button[class*="md:hidden"] * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

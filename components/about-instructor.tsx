@@ -28,14 +28,15 @@ export function AboutInstructor() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-100px" }}
           className="text-center mb-16"
         >
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            viewport={{ once: true }}
             className="inline-block px-4 py-2 bg-accent/10 border border-accent/30 rounded-full mb-6"
           >
             <p className="text-sm font-semibold text-accent">Meet Your Instructor</p>
@@ -48,36 +49,30 @@ export function AboutInstructor() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true, margin: "-100px" }}
             className="flex justify-center"
           >
             <div className="relative w-full max-w-sm group">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 25, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                className="absolute inset-0 bg-gradient-to-br from-accent to-primary rounded-3xl opacity-25 blur-3xl"
-              />
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="relative w-full aspect-square rounded-3xl shadow-2xl overflow-hidden border border-accent/20"
-              >
+              <div className="absolute inset-0 bg-gradient-to-br from-accent to-primary rounded-3xl opacity-25 blur-3xl" />
+              <div className="relative w-full aspect-square rounded-3xl shadow-2xl overflow-hidden border border-accent/20">
                 <img src="/instructor-face.png" alt="Instructor" className="w-full h-full object-cover " />
-              </motion.div>
+              </div>
             </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true, margin: "-100px" }}
             className="space-y-8"
           >
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              viewport={{ once: true }}
               className="text-lg text-foreground/80 leading-relaxed"
             >
               With years of hands-on experience in computer hardware, software, and networking, our instructor brings
@@ -87,7 +82,8 @@ export function AboutInstructor() {
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              viewport={{ once: true }}
               className="text-lg text-foreground/80 leading-relaxed"
             >
               We believe in learning by doing. Every concept taught is backed by real-world applications and
@@ -102,9 +98,9 @@ export function AboutInstructor() {
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + index * 0.1 }}
+                    transition={{ delay: 0.2 + index * 0.1, duration: 0.6 }}
                     viewport={{ once: true }}
-                    className="flex items-start gap-4 p-4 bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/50 transition-all"
+                    className="flex items-start gap-4 p-4 bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/50"
                   >
                     <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Icon className="w-6 h-6 text-primary" />

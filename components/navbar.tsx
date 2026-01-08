@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -31,25 +30,23 @@ export function Navbar() {
   const handleNavClick = () => setIsOpen(false)
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 !transition-none ${
         isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border/50 py-3" : "bg-transparent py-6"
       }`}
+      style={{ animation: 'none', transition: 'none' }}
     >
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="#home" className="flex items-center gap-2 group">
-          <motion.div whileHover={{ scale: 1.1 }} className="w-26 h-16 relative">
+          <div className="w-26 h-16 relative">
             <Image
               src="/logo.png"
               alt="Gh0sT Tech Logo"
               fill
               className="object-contain"
             />
-          </motion.div>
+          </div>
           <span className="font-bold text-lg hidden sm:inline">Gh0sT Tech</span>
         </Link>
 
@@ -57,18 +54,9 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-1">
           {navItems.map((item) => (
             <Link key={item.label} href={item.href}>
-              <motion.button
-                whileHover={{ y: -2 }}
-                className="px-4 py-2 text-foreground/80 hover:text-foreground transition-colors relative group"
-              >
+              <button className="px-4 py-2 text-foreground/80 hover:text-foreground relative group">
                 {item.label}
-                <motion.div
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left"
-                  initial={{ scaleX: 0 }}
-                  whileHover={{ scaleX: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.button>
+              </button>
             </Link>
           ))}
         </div>
@@ -80,47 +68,37 @@ export function Navbar() {
           </Link>
 
           {/* Mobile Menu Button */}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={toggleMenu}
-            className="md:hidden text-foreground"
+            className="md:hidden text-foreground transition-none"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </motion.button>
+          </button>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden border-t border-border/50 bg-card/80 backdrop-blur-md"
-          >
-            <div className="max-w-6xl mx-auto px-4 py-4 space-y-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={handleNavClick}
-                  className="block px-4 py-3 text-foreground/80 hover:text-foreground hover:bg-primary/10 rounded-lg transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <Link href="#registration" onClick={handleNavClick} className="block">
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-2">
-                  Register Now
-                </Button>
+      {isOpen && (
+        <div className="md:hidden border-t border-border/50 bg-card/80 backdrop-blur-md transition-none">
+          <div className="max-w-6xl mx-auto px-4 py-4 space-y-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={handleNavClick}
+                className="block px-4 py-3 text-foreground/80 hover:text-foreground hover:bg-primary/10 rounded-lg"
+              >
+                {item.label}
               </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
+            ))}
+            <Link href="#registration" onClick={handleNavClick} className="block">
+              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-2">
+                Register Now
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+    </nav>
   )
 }

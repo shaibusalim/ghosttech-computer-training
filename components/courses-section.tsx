@@ -63,7 +63,7 @@ export function CoursesSection() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8 },
+      transition: { duration: 0.6 },
     },
   }
 
@@ -73,14 +73,15 @@ export function CoursesSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-100px" }}
           className="text-center mb-16"
         >
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            viewport={{ once: true }}
             className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-full mb-6"
           >
             <p className="text-sm font-semibold text-primary">Our Curriculum</p>
@@ -96,18 +97,18 @@ export function CoursesSection() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {courses.map((course, index) => (
-            <motion.div key={course.id} variants={itemVariants} whileHover={{ y: -12, transition: { duration: 0.3 } }}>
+          {courses.map((course) => (
+            <motion.div key={course.id} variants={itemVariants}>
               <Card
-                className={`h-full border-primary/20 bg-gradient-to-br ${course.color} backdrop-blur-sm hover:border-primary/50 transition-all duration-300 group`}
+                className={`h-full border-primary/20 bg-gradient-to-br ${course.color} backdrop-blur-sm hover:border-primary/50 transition-colors duration-300 group`}
               >
                 <CardHeader>
-                  <motion.div whileHover={{ scale: 1.2, rotate: 10 }} className="text-6xl mb-4 w-fit">
+                  <div className="text-6xl mb-4 w-fit">
                     {course.icon}
-                  </motion.div>
+                  </div>
                   <CardTitle className="text-2xl group-hover:text-primary transition-colors">{course.title}</CardTitle>
                   <CardDescription className="text-base text-foreground/70">{course.description}</CardDescription>
                 </CardHeader>
@@ -118,7 +119,7 @@ export function CoursesSection() {
                         key={i}
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
+                        transition={{ delay: i * 0.1, duration: 0.4 }}
                         viewport={{ once: true }}
                         className="flex items-start gap-3"
                       >

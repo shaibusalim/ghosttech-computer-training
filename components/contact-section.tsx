@@ -52,7 +52,7 @@ export function ContactSection() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8 },
+      transition: { duration: 0.6 },
     },
   }
 
@@ -62,14 +62,15 @@ export function ContactSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-100px" }}
           className="text-center mb-16"
         >
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            viewport={{ once: true }}
             className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-full mb-6"
           >
             <p className="text-sm font-semibold text-primary">Contact & Support</p>
@@ -85,33 +86,20 @@ export function ContactSection() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {contactMethods.map((method) => {
             const Icon = method.icon
             return (
-              <motion.div
-                key={method.title}
-                variants={itemVariants}
-                whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              >
+              <motion.div key={method.title} variants={itemVariants}>
                 <Card
-                  className={`border-primary/20 bg-gradient-to-br ${method.color} backdrop-blur-sm hover:border-primary/50 transition-all duration-300 h-full group overflow-hidden`}
+                  className={`border-primary/20 bg-gradient-to-br ${method.color} backdrop-blur-sm hover:border-primary/50 transition-colors duration-300 h-full group overflow-hidden`}
                 >
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
-                    transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
-                  />
                   <CardContent className="relative pt-8 text-center space-y-6">
-                    <motion.div
-                      whileHover={{ scale: 1.15, rotate: 10 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                      className={`w-16 h-16 ${method.iconColor} mx-auto`}
-                    >
+                    <div className={`w-16 h-16 ${method.iconColor} mx-auto`}>
                       <Icon className="w-full h-full" strokeWidth={1.5} />
-                    </motion.div>
+                    </div>
 
                     <div>
                       <h3 className="text-2xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
@@ -120,7 +108,12 @@ export function ContactSection() {
                       <p className="text-foreground/60 text-sm">{method.description}</p>
                     </div>
 
-                    <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      transition={{ delay: 0.3, duration: 0.6 }}
+                      viewport={{ once: true }}
+                    >
                       <p className="text-primary font-bold text-lg font-mono">{method.value}</p>
                     </motion.div>
 
@@ -129,13 +122,7 @@ export function ContactSection() {
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold group/btn"
                     >
                       <a href={method.link} target="_blank" rel="noopener noreferrer">
-                        <motion.span
-                          initial={{ x: 0 }}
-                          whileHover={{ x: 4 }}
-                          transition={{ type: "spring", stiffness: 400 }}
-                        >
-                          Contact
-                        </motion.span>
+                        Contact
                       </a>
                     </Button>
                   </CardContent>
