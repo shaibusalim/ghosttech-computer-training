@@ -1,17 +1,23 @@
+
+import nodemailer from 'nodemailer'
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { type = "registration" } = body
 
+    // Create Gmail transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    })
+
     if (type === "approval") {
       // Handle approval notification
       const { full_name, email, course_selection } = body
-
-      const adminEmail = process.env.ADMIN_EMAIL
-      if (!adminEmail) {
-        console.error("ADMIN_EMAIL not configured")
-        return Response.json({ error: "Admin email not configured" }, { status: 500 })
-      }
 
       // Create approval confirmation email HTML template
       const emailHTML = `
@@ -29,6 +35,14 @@ export async function POST(request: Request) {
               .success-box h3 { color: #166534; margin-top: 0; }
               .info-box { background: #fff; padding: 20px; margin: 15px 0; border-left: 4px solid #16a34a; border-radius: 4px; }
               .info-box h3 { color: #16a34a; margin-top: 0; }
+              .program-overview { background: #f0f9ff; border: 1px solid #bae6fd; padding: 20px; border-radius: 4px; margin: 20px 0; }
+              .program-overview h3 { color: #0369a1; margin-top: 0; }
+              .payment-info { background: #fef3c7; border: 1px solid #fde68a; padding: 20px; border-radius: 4px; margin: 20px 0; }
+              .payment-info h3 { color: #92400e; margin-top: 0; }
+              .telegram-group { background: #e0f2fe; border: 1px solid #bae6fd; padding: 20px; border-radius: 4px; margin: 20px 0; }
+              .telegram-group h3 { color: #0369a1; margin-top: 0; }
+              .contact-info { background: #f3e8ff; border: 1px solid #d8b4fe; padding: 20px; border-radius: 4px; margin: 20px 0; }
+              .contact-info h3 { color: #7c3aed; margin-top: 0; }
               .footer { text-align: center; color: #666; font-size: 12px; padding-top: 20px; border-top: 1px solid #ddd; }
             </style>
           </head>
@@ -41,80 +55,93 @@ export async function POST(request: Request) {
 
               <div class="content">
                 <div class="success-box">
-                  <h3>Congratulations!</h3>
-                  <p>Your registration has been approved and you're now enrolled in our comprehensive computer training program.</p>
+                  <h3>Hello ${full_name},</h3>
+                  <p>Congratulations 🎉 and welcome to Gh0sT Tech Computer Training Program.</p>
+                  <p>We are pleased to confirm your registration for our Computer Hardware, Software & Basic Networking course.</p>
                 </div>
 
-                <div class="info-box">
-                  <h3>Student Information</h3>
-                  <p><strong>Name:</strong> ${full_name}</p>
-                  <p><strong>Email:</strong> ${email}</p>
-                  <p><strong>Courses:</strong> ${course_selection}</p>
-                  <p><strong>Approval Date:</strong> ${new Date().toLocaleString()}</p>
-                </div>
-
-                <div class="info-box">
-                  <h3>Next Steps</h3>
-                  <p>Our team will contact you shortly to:</p>
+                <div class="program-overview">
+                  <h3>📚 Program Overview</h3>
+                  <p>During this training, you will learn:</p>
                   <ul>
-                    <li>Arrange payment (GHS 700)</li>
-                    <li>Schedule your classes</li>
-                    <li>Provide course materials</li>
+                    <li>• Computer hardware components, assembling & troubleshooting</li>
+                    <li>• Windows and Microsoft Office installation</li>
+                    <li>• Software troubleshooting and virus removal</li>
+                    <li>• Basic networking concepts and LAN setup</li>
                   </ul>
                 </div>
 
                 <div class="info-box">
-                  <h3>Course Details</h3>
-                  <p><strong>Duration:</strong> 3 months</p>
-                  <p><strong>Location:</strong> Tamale - Gurugu, Ghana</p>
-                  <p><strong>Includes:</strong> Computer Hardware, Software & System Management, Networking Basics</p>
+                  <h3>🗓️ Training Start Date</h3>
+                  <p><strong>Start Date:</strong> First Week of February</p>
+                  <p><strong>Location:</strong> Tamale – Gurugu</p>
                 </div>
 
-                <p>If you have any questions, please don't hesitate to contact us.</p>
-                <p>Welcome to the Gh0sT Tech family!</p>
-                <p>Best regards,<br><strong>Gh0sT Tech Team</strong></p>
+                <div class="payment-info">
+                  <h3>💰 Payment Information</h3>
+                  <p><strong>Total course fee is GHS 700.</strong></p>
+                  <p>Payment can be made using any of the following options:</p>
+                  <ul>
+                    <li>✅ Full payment before training begins</li>
+                    <li>✅ Part payment before start + balance midway through the program</li>
+                  </ul>
+                  <p><em>Payment is done physically. Our team will guide you on payment arrangements.</em></p>
+                </div>
+
+                <div class="telegram-group">
+                  <h3>📲 Telegram Group</h3>
+                  <p>Please join our official Telegram group for announcements, class updates, and learning materials:</p>
+                  <p>👉 <a href="https://t.me/+I7G7vwNqWko2NGFk" style="color: #0369a1; text-decoration: none; font-weight: bold;">https://t.me/+I7G7vwNqWko2NGFk</a></p>
+                </div>
+
+                <div class="contact-info">
+                  <h3>Contact Information</h3>
+                  <p>If you have any questions, feel free to contact us:</p>
+                  <p><strong>📞 Phone:</strong> 0541120274</p>
+                  <p><strong>💬 WhatsApp:</strong> 0209832978</p>
+                </div>
+
+                <div class="success-box">
+                  <p>We look forward to training you and helping you build real, practical computer skills.</p>
+                  <p><strong>Welcome once again!</strong></p>
+                </div>
+
+                <p>Best regards,<br><strong>Gh0sT Tech Team</strong><br>Practical Computer Training in Tamale</p>
               </div>
 
               <div class="footer">
                 <p>&copy; 2026 Gh0sT Tech. Automated Approval Notification.</p>
+                <p>This email was sent automatically upon registration approval.</p>
               </div>
             </div>
           </body>
         </html>
       `
 
-      // Send email using Resend
-      const resendResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "Gh0sT Tech <noreply@resend.dev>",
-          to: [email],
-          subject: `🎉 Welcome to Gh0sT Tech - Registration Approved!`,
+      // Send email using Gmail SMTP
+      try {
+        const mailOptions = {
+          from: `"Gh0sT Tech" <${process.env.GMAIL_USER}>`,
+          to: email,
+          subject: "🎉 Welcome to Gh0sT Tech - Registration Approved!",
           html: emailHTML,
-        }),
-      })
+        }
 
-      if (!resendResponse.ok) {
-        const errorData = await resendResponse.text()
-        console.error("Resend API error:", errorData)
+        const info = await transporter.sendMail(mailOptions)
+        console.log("Approval notification sent successfully:", info.messageId)
+
+        return Response.json(
+          {
+            success: true,
+            message: "Approval notification sent successfully",
+            email_id: info.messageId,
+          },
+          { status: 200 },
+        )
+      } catch (emailError) {
+        console.error("Gmail SMTP error:", emailError)
         return Response.json({ error: "Failed to send approval notification" }, { status: 500 })
       }
-
-      const resendData = await resendResponse.json()
-      console.log("Approval notification sent successfully:", resendData)
-
-      return Response.json(
-        {
-          success: true,
-          message: "Approval notification sent successfully",
-          email_id: resendData.id,
-        },
-        { status: 200 },
-      )
     }
 
     // Handle new registration notification (existing logic)
@@ -216,38 +243,30 @@ export async function POST(request: Request) {
       </html>
     `
 
-    // Send email using Resend
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Gh0sT Tech <noreply@resend.dev>",
-        to: [adminEmail],
+    // Send email using Gmail SMTP
+    try {
+      const mailOptions = {
+        from: `"Gh0sT Tech" <${process.env.GMAIL_USER}>`,
+        to: adminEmail,
         subject: `🚨 New Student Registration: ${full_name}`,
         html: emailHTML,
-      }),
-    })
+      }
 
-    if (!resendResponse.ok) {
-      const errorData = await resendResponse.text()
-      console.error("Resend API error:", errorData)
+      const info = await transporter.sendMail(mailOptions)
+      console.log("Admin notification sent successfully:", info.messageId)
+
+      return Response.json(
+        {
+          success: true,
+          message: "Admin notification sent successfully",
+          email_id: info.messageId,
+        },
+        { status: 200 },
+      )
+    } catch (emailError) {
+      console.error("Gmail SMTP error:", emailError)
       return Response.json({ error: "Failed to send admin notification" }, { status: 500 })
     }
-
-    const resendData = await resendResponse.json()
-    console.log("Admin notification sent successfully:", resendData)
-
-    return Response.json(
-      {
-        success: true,
-        message: "Admin notification sent successfully",
-        email_id: resendData.id,
-      },
-      { status: 200 },
-    )
   } catch (error) {
     console.error("[v0] Admin notification API error:", error)
     return Response.json({ error: "Failed to send admin notification" }, { status: 500 })
