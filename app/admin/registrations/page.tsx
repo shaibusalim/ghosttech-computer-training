@@ -7,7 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { LogOut, RefreshCw } from "lucide-react"
+import { LogOut, RefreshCw, Trash2, Check, Mail } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface Registration {
   id: string
@@ -35,7 +46,9 @@ export default function AdminRegistrationsPage() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/admin/registrations")
+      const response = await fetch("/api/admin/registrations", {
+        credentials: "include",
+      })
       if (response.ok) {
         setIsAuthenticated(true)
         fetchRegistrations()
@@ -49,7 +62,9 @@ export default function AdminRegistrationsPage() {
 
   const fetchRegistrations = async () => {
     try {
-      const response = await fetch("/api/admin/registrations")
+      const response = await fetch("/api/admin/registrations", {
+        credentials: "include",
+      })
       if (response.ok) {
         const data = await response.json()
         setRegistrations(data.registrations || [])
@@ -67,7 +82,7 @@ export default function AdminRegistrationsPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/admin/logout", { method: "POST" })
+      await fetch("/api/admin/logout", { method: "POST", credentials: "include" })
       router.push("/admin/login")
     } catch {
       toast({
@@ -86,6 +101,79 @@ export default function AdminRegistrationsPage() {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const handleDelete = async (id: string) => {
+    // Optimistically remove from UI first
+    setRegistrations(prev => prev.filter(reg => reg.id !== id))
+
+    try {
+      const response = await fetch(`/api/admin/registrations/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Registration deleted successfully",
+        })
+      } else {
+        // Revert the optimistic update on failure
+        fetchRegistrations()
+        const errorText = await response.text()
+        console.error("Delete failed:", response.status, errorText)
+        toast({
+          title: "Error",
+          description: `Failed to delete registration: ${errorText}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      // Revert the optimistic update on error
+      fetchRegistrations()
+      console.error("Delete error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete registration",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleApprove = async (registration: Registration) => {
+    try {
+      const response = await fetch(`/api/admin/registrations/${registration.id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: registration.email,
+          full_name: registration.full_name,
+          course_selection: registration.course_selection,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Registration approved and email sent",
+        })
+        fetchRegistrations()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to approve registration",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to approve registration",
+        variant: "destructive",
+      })
+    }
   }
 
   if (!isAuthenticated) {
@@ -138,46 +226,163 @@ export default function AdminRegistrationsPage() {
                 <p className="text-muted-foreground">No registrations found</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>WhatsApp</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Knowledge</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Registered</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {registrations.map((reg) => (
-                      <TableRow key={reg.id}>
-                        <TableCell className="font-medium">{reg.full_name}</TableCell>
-                        <TableCell>{reg.email}</TableCell>
-                        <TableCell>{reg.phone_number}</TableCell>
-                        <TableCell>{reg.whatsapp_number}</TableCell>
-                        <TableCell>{reg.location}</TableCell>
-                        <TableCell>{reg.course_selection}</TableCell>
-                        <TableCell>
-                          <Badge variant={reg.previous_knowledge ? "default" : "secondary"}>
-                            {reg.previous_knowledge ? "Yes" : "No"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
+              <>
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {registrations.map((reg) => (
+                    <Card key={reg.id} className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-semibold text-lg">{reg.full_name}</h3>
+                            <p className="text-sm text-muted-foreground">{reg.email}</p>
+                          </div>
                           <Badge variant={reg.status === "pending" ? "outline" : "default"}>
                             {reg.status}
                           </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(reg.created_at)}</TableCell>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="font-medium">Phone:</span> {reg.phone_number}
+                          </div>
+                          <div>
+                            <span className="font-medium">WhatsApp:</span> {reg.whatsapp_number}
+                          </div>
+                          <div className="col-span-2">
+                            <span className="font-medium">Location:</span> {reg.location}
+                          </div>
+                          <div className="col-span-2">
+                            <span className="font-medium">Course:</span> {reg.course_selection}
+                          </div>
+                          <div>
+                            <span className="font-medium">Knowledge:</span>
+                            <Badge variant={reg.previous_knowledge ? "default" : "secondary"} className="ml-1">
+                              {reg.previous_knowledge ? "Yes" : "No"}
+                            </Badge>
+                          </div>
+                          <div>
+                            <span className="font-medium">Registered:</span> {formatDate(reg.created_at)}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                          {reg.status === "pending" && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(reg)}
+                              className="flex-1"
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                          )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive" className="flex-1">
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Registration</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete {reg.full_name}'s registration? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(reg.id)}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>WhatsApp</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Knowledge</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Registered</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {registrations.map((reg) => (
+                        <TableRow key={reg.id}>
+                          <TableCell className="font-medium">{reg.full_name}</TableCell>
+                          <TableCell>{reg.email}</TableCell>
+                          <TableCell>{reg.phone_number}</TableCell>
+                          <TableCell>{reg.whatsapp_number}</TableCell>
+                          <TableCell>{reg.location}</TableCell>
+                          <TableCell>{reg.course_selection}</TableCell>
+                          <TableCell>
+                            <Badge variant={reg.previous_knowledge ? "default" : "secondary"}>
+                              {reg.previous_knowledge ? "Yes" : "No"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={reg.status === "pending" ? "outline" : "default"}>
+                              {reg.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDate(reg.created_at)}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {reg.status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApprove(reg)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Approve
+                                </Button>
+                              )}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Registration</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete {reg.full_name}'s registration? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(reg.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

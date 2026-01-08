@@ -8,8 +8,12 @@ export async function GET() {
     const cookieStore = await cookies()
     const adminAuth = cookieStore.get('admin_auth')
 
-    if (!adminAuth || adminAuth.value !== 'true') {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
+    if (!adminAuth) {
+      return Response.json({ error: "No auth cookie" }, { status: 401 })
+    }
+
+    if (adminAuth.value !== 'true') {
+      return Response.json({ error: "Invalid auth cookie" }, { status: 401 })
     }
 
     const db = getAdminDb()

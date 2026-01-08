@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
       // Set admin auth cookie
       cookieStore.set('admin_auth', 'true', {
-        httpOnly: true,
+        httpOnly: false, // Allow client-side access for debugging
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24, // 24 hours
