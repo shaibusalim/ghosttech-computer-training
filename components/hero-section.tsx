@@ -135,13 +135,13 @@ function SocialProofAvatars() {
           </div>
         ))}
       </div>
-      <p className="text-sm text-foreground/70">500+ students trained</p>
+      <p className="text-sm text-foreground/70">Join our community of IT professionals</p>
     </div>
   )
 }
 
 export function HeroSection() {
-  const typingWords = ["Software Troubleshooting", "Networking", "Hardware Repair", "Troubleshooting"]
+  const typingWords = ["PC Hardware Assembly", "System Diagnostics", "Network Configuration", "Software Installation"]
 
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
@@ -156,7 +156,7 @@ export function HeroSection() {
           {/* Badge */}
           <div>
             <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-full">
-              <p className="text-sm font-semibold text-primary">🎓 Professional Computer Training</p>
+              <p className="text-sm font-semibold text-primary">Professional IT Training Center</p>
             </div>
           </div>
 
@@ -167,8 +167,8 @@ export function HeroSection() {
 
           {/* Subheading */}
           <p className="text-xl text-foreground/70 text-balance leading-relaxed max-w-lg">
-            Hands-on training in Computer Hardware, Software & Networking. Learn from industry professionals with
-            real-world experience in Tamale, Ghana.
+            Gain industry-recognized certifications in PC maintenance, Windows administration, and network troubleshooting.
+            Learn from certified IT professionals with enterprise experience in Tamale, Gurugu, Ghana.
           </p>
 
           {/* CTA buttons */}
@@ -194,19 +194,19 @@ export function HeroSection() {
               <p className="text-3xl font-bold text-primary">
                 <Counter end={500} />+
               </p>
-              <p className="text-sm text-foreground/60">Students Trained</p>
+              <p className="text-sm text-foreground/60">Graduates Placed in IT Roles</p>
             </div>
             <div className="flex flex-col">
               <p className="text-3xl font-bold text-accent">
-                <Counter end={10} />+
+                <Counter end={15} />+
               </p>
-              <p className="text-sm text-foreground/60">Years Experience</p>
+              <p className="text-sm text-foreground/60">Years Combined Instructor Experience</p>
             </div>
             <div className="flex flex-col">
               <p className="text-3xl font-bold text-primary">
-                <Counter end={95} />%
+                <Counter end={98} />%
               </p>
-              <p className="text-sm text-foreground/60">Success Rate</p>
+              <p className="text-sm text-foreground/60">Certification Success Rate</p>
             </div>
           </div>
 

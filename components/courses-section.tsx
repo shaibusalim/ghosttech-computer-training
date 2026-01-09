@@ -2,46 +2,49 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, Settings, Monitor, Network } from "lucide-react"
 
 const courses = [
   {
     id: "hardware",
     title: "Computer Hardware",
-    description: "Master the fundamentals of computer components",
+    description: "Master PC assembly, component identification, and hardware troubleshooting aligned with CompTIA A+ standards",
     topics: [
-      "Basic computer components",
-      "Disassembling & assembling PCs",
-      "Hardware upgrades & maintenance",
-      "Troubleshooting common issues",
+      "Motherboard components and CPU installation",
+      "RAM, storage devices, and power supplies",
+      "Peripheral devices and expansion cards",
+      "Hardware diagnostics and repair techniques",
+      "BIOS/UEFI configuration and system setup",
     ],
-    icon: "⚙️",
+    icon: Settings,
     color: "from-blue-500/20 to-blue-500/5",
   },
   {
     id: "software",
     title: "Software & System Management",
-    description: "Learn essential software skills for daily computing",
+    description: "Master Windows OS installation, Microsoft Office productivity tools, antivirus solutions, and system optimization techniques",
     topics: [
-      "Windows installation & configuration",
-      "Microsoft Office suite",
-      "Virus removal & security",
-      "Software installation & troubleshooting",
+      "Windows 10/11 installation and configuration",
+      "Microsoft Office 365 and productivity applications",
+      "Antivirus software and malware removal",
+      "System updates, backups, and performance tuning",
+      "Software troubleshooting and compatibility issues",
     ],
-    icon: "💻",
+    icon: Monitor,
     color: "from-purple-500/20 to-purple-500/5",
   },
   {
     id: "networking",
     title: "Networking Basics",
-    description: "Understand network fundamentals and connectivity",
+    description: "Learn network configuration, TCP/IP protocols, and enterprise networking practices",
     topics: [
-      "Network types & concepts",
-      "Cabling & connectivity",
-      "LAN setup & troubleshooting",
-      "Basic network security",
+      "TCP/IP protocols and network addressing",
+      "Router and switch configuration basics",
+      "Wireless networking and security",
+      "Network troubleshooting and diagnostics",
+      "LAN/WAN concepts and cable management",
     ],
-    icon: "🌐",
+    icon: Network,
     color: "from-emerald-500/20 to-emerald-500/5",
   },
 ]
@@ -106,8 +109,8 @@ export function CoursesSection() {
                 className={`h-full border-primary/20 bg-gradient-to-br ${course.color} backdrop-blur-sm hover:border-primary/50 transition-colors duration-300 group`}
               >
                 <CardHeader>
-                  <div className="text-6xl mb-4 w-fit">
-                    {course.icon}
+                  <div className="w-16 h-16 mb-4 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <course.icon className="w-8 h-8 text-primary" />
                   </div>
                   <CardTitle className="text-2xl group-hover:text-primary transition-colors">{course.title}</CardTitle>
                   <CardDescription className="text-base text-foreground/70">{course.description}</CardDescription>

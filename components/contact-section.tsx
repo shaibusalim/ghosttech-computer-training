@@ -3,14 +3,15 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Phone, MessageCircle, MapPin } from "lucide-react"
+import { Phone, MessageCircle, MapPin, Mail } from "lucide-react"
 
 const contactMethods = [
   {
     icon: Phone,
     title: "Call Us",
-    description: "Reach out via phone",
+    description: "Direct support during business hours",
     value: "0541120274",
+    subtitle: "Mon-Fri: 8AM-6PM",
     link: "tel:0541120274",
     color: "from-blue-500/20 to-blue-500/5",
     iconColor: "text-blue-500",
@@ -18,18 +19,30 @@ const contactMethods = [
   {
     icon: MessageCircle,
     title: "WhatsApp",
-    description: "Chat with us directly",
+    description: "24/7 instant messaging support",
     value: "0209832978",
+    subtitle: "Quick responses guaranteed",
     link: "https://wa.me/233209832978",
     color: "from-green-500/20 to-green-500/5",
     iconColor: "text-green-500",
   },
   {
+    icon: Mail,
+    title: "Email Us",
+    description: "For detailed inquiries and course information",
+    value: "cybergh0st404@protonmail.com",
+    subtitle: "Response within 24 hours",
+    link: "mailto:cybergh0st404@protonmail.com",
+    color: "from-purple-500/20 to-purple-500/5",
+    iconColor: "text-purple-500",
+  },
+  {
     icon: MapPin,
     title: "Visit Us",
-    description: "Office location",
-    value: "Tamale – Gurugu, Ghana",
-    link: "https://maps.google.com/?q=Tamale+Gurugu+Ghana",
+    description: "Training center location",
+    value: "Gurugu, Tamale, Ghana",
+    subtitle: "By appointment",
+    link: "https://maps.google.com/?q=Gurugu+Tamale+Ghana",
     color: "from-red-500/20 to-red-500/5",
     iconColor: "text-red-500",
   },
@@ -87,7 +100,7 @@ export function ContactSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-4 gap-6"
         >
           {contactMethods.map((method) => {
             const Icon = method.icon
@@ -113,8 +126,16 @@ export function ContactSection() {
                       whileInView={{ opacity: 1 }}
                       transition={{ delay: 0.3, duration: 0.6 }}
                       viewport={{ once: true }}
+                      className="space-y-2"
                     >
-                      <p className="text-primary font-bold text-lg font-mono">{method.value}</p>
+                      <p className={`text-primary font-bold font-mono ${
+                        method.value.length > 20 ? 'text-sm' : 'text-lg'
+                      }`}>
+                        {method.value}
+                      </p>
+                      {method.subtitle && (
+                        <p className="text-foreground/50 text-xs">{method.subtitle}</p>
+                      )}
                     </motion.div>
 
                     <Button

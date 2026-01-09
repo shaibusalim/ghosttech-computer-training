@@ -7,18 +7,18 @@ export function AboutInstructor() {
   const features = [
     {
       icon: Award,
-      title: "Expert Knowledge",
-      description: "Proficient in hardware maintenance, software installation, and network setup",
+      title: "CompTIA A+ Certified",
+      description: "Industry-recognized certification in PC hardware, software troubleshooting, and operational procedures",
     },
     {
       icon: Heart,
-      title: "Passion for Teaching",
-      description: "Dedicated to helping students master practical computer skills",
+      title: "Proven Teaching Excellence",
+      description: "7+ years guiding students from beginners to certified IT professionals with hands-on, practical training",
     },
     {
       icon: Zap,
-      title: "Real-World Experience",
-      description: "Brings industry practices and troubleshooting techniques to every class",
+      title: "Enterprise IT Experience",
+      description: "Real-world expertise from supporting business operations, network deployments, and system maintenance",
     },
   ]
 
@@ -39,9 +39,9 @@ export function AboutInstructor() {
             viewport={{ once: true }}
             className="inline-block px-4 py-2 bg-accent/10 border border-accent/30 rounded-full mb-6"
           >
-            <p className="text-sm font-semibold text-accent">Meet Your Instructor</p>
+            <p className="text-sm font-semibold text-accent">Meet Salim Shaibu (Gh0sT)</p>
           </motion.div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Expert Training You Can Trust</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">CompTIA A+ Certified Instructor</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-accent to-primary mx-auto rounded-full" />
         </motion.div>
 
@@ -56,7 +56,7 @@ export function AboutInstructor() {
             <div className="relative w-full max-w-sm group">
               <div className="absolute inset-0 bg-gradient-to-br from-accent to-primary rounded-3xl opacity-25 blur-3xl" />
               <div className="relative w-full aspect-square rounded-3xl shadow-2xl overflow-hidden border border-accent/20">
-                <img src="/instructor-face.png" alt="Instructor" className="w-full h-full object-cover " />
+                <img src="/instructor-face.png" alt="Salim Shaibu - Lead IT Instructor" className="w-full h-full object-cover " />
               </div>
             </div>
           </motion.div>
@@ -75,8 +75,8 @@ export function AboutInstructor() {
               viewport={{ once: true }}
               className="text-lg text-foreground/80 leading-relaxed"
             >
-              With years of hands-on experience in computer hardware, software, and networking, our instructor brings
-              practical knowledge directly to the classroom.
+              With over 7 years of hands-on experience in computer hardware, software, and networking, Salim brings
+              industry-certified expertise directly to the classroom as a CompTIA A+ certified professional.
             </motion.p>
 
             <motion.p
@@ -86,8 +86,9 @@ export function AboutInstructor() {
               viewport={{ once: true }}
               className="text-lg text-foreground/80 leading-relaxed"
             >
-              We believe in learning by doing. Every concept taught is backed by real-world applications and
-              troubleshooting scenarios you'll encounter in professional environments.
+              Known as Gh0sT in the tech community, Salim specializes in practical training that bridges classroom
+              learning with real-world IT challenges. Every lesson is designed to prepare you for certification exams
+              and professional success in Ghana's growing technology sector.
             </motion.p>
 
             <div className="space-y-4 pt-4">
