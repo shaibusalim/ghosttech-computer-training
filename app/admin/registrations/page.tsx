@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { LogOut, RefreshCw, Trash2, Check, Mail } from "lucide-react"
+import { LogOut, RefreshCw, Trash2, Check, CreditCard, Loader2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface Registration {
   id: string
@@ -31,12 +34,21 @@ interface Registration {
   previous_knowledge: boolean
   status: string
   created_at: string
+  payment_status?: "none" | "partial" | "full"
+  payment_amount?: number
 }
 
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<"none" | "partial" | "full">("none")
+  const [paymentAmount, setPaymentAmount] = useState<number | undefined>(undefined)
+  const [approveLoadingId, setApproveLoadingId] = useState<string | null>(null)
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
+  const [paymentSaving, setPaymentSaving] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -62,6 +74,7 @@ export default function AdminRegistrationsPage() {
 
   const fetchRegistrations = async () => {
     try {
+      setLoading(true)
       const response = await fetch("/api/admin/registrations", {
         credentials: "include",
       })
@@ -93,6 +106,53 @@ export default function AdminRegistrationsPage() {
     }
   }
 
+  const openPaymentDialog = (reg: Registration) => {
+    setSelectedRegistration(reg)
+    setPaymentStatus(reg.payment_status || "none")
+    setPaymentAmount(reg.payment_amount)
+    setPaymentDialogOpen(true)
+  }
+
+  const handleConfirmPayment = async () => {
+    if (!selectedRegistration) return
+    try {
+      const response = await fetch(`/api/admin/registrations/${selectedRegistration.id}/payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          payment_status: paymentStatus,
+          payment_amount: paymentStatus === "partial" ? paymentAmount : undefined,
+          email: selectedRegistration.email,
+          full_name: selectedRegistration.full_name,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Payment status updated and email sent",
+        })
+        setPaymentDialogOpen(false)
+        setSelectedRegistration(null)
+        fetchRegistrations()
+      } else {
+        const errorText = await response.text()
+        toast({
+          title: "Error",
+          description: `Failed to update payment: ${errorText}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update payment",
+        variant: "destructive",
+      })
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -108,6 +168,7 @@ export default function AdminRegistrationsPage() {
     setRegistrations(prev => prev.filter(reg => reg.id !== id))
 
     try {
+      setDeleteLoadingId(id)
       const response = await fetch(`/api/admin/registrations/${id}`, {
         method: "DELETE",
         credentials: "include",
@@ -138,11 +199,14 @@ export default function AdminRegistrationsPage() {
         description: "Failed to delete registration",
         variant: "destructive",
       })
+    } finally {
+      setDeleteLoadingId(null)
     }
   }
 
   const handleApprove = async (registration: Registration) => {
     try {
+      setApproveLoadingId(registration.id)
       const response = await fetch(`/api/admin/registrations/${registration.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -173,6 +237,8 @@ export default function AdminRegistrationsPage() {
         description: "Failed to approve registration",
         variant: "destructive",
       })
+    } finally {
+      setApproveLoadingId(null)
     }
   }
 
@@ -264,6 +330,15 @@ export default function AdminRegistrationsPage() {
                           <div>
                             <span className="font-medium">Registered:</span> {formatDate(reg.created_at)}
                           </div>
+                          <div className="col-span-2">
+                            <span className="font-medium">Payment:</span>{" "}
+                            <Badge variant={reg.payment_status === "full" ? "default" : reg.payment_status === "partial" ? "outline" : "secondary"} className="ml-1">
+                              {reg.payment_status ? reg.payment_status : "none"}
+                            </Badge>
+                            {reg.payment_status === "partial" && reg.payment_amount ? (
+                              <span className="ml-2 text-muted-foreground">GHS {reg.payment_amount}</span>
+                            ) : null}
+                          </div>
                         </div>
 
                         <div className="flex gap-2 pt-2">
@@ -272,16 +347,80 @@ export default function AdminRegistrationsPage() {
                               size="sm"
                               onClick={() => handleApprove(reg)}
                               className="flex-1"
+                              disabled={approveLoadingId === reg.id}
                             >
-                              <Check className="w-4 h-4 mr-1" />
-                              Approve
+                              {approveLoadingId === reg.id ? (
+                                <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Approving</span>
+                              ) : (
+                                <>
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Approve
+                                </>
+                              )}
                             </Button>
                           )}
+                          <Dialog open={paymentDialogOpen && selectedRegistration?.id === reg.id} onOpenChange={setPaymentDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="secondary" className="flex-1" onClick={() => openPaymentDialog(reg)}>
+                                <CreditCard className="w-4 h-4 mr-1" />
+                                Confirm Payment
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Confirm Payment</DialogTitle>
+                                <DialogDescription>
+                                  Set payment status for {reg.full_name}. If partial, enter the amount received.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label>Payment Status</Label>
+                                  <div className="flex gap-2">
+                                    <Button type="button" variant={paymentStatus === "full" ? "default" : "outline"} onClick={() => setPaymentStatus("full")}>
+                                      Full
+                                    </Button>
+                                    <Button type="button" variant={paymentStatus === "partial" ? "default" : "outline"} onClick={() => setPaymentStatus("partial")}>
+                                      Partial
+                                    </Button>
+                                    <Button type="button" variant={paymentStatus === "none" ? "default" : "outline"} onClick={() => setPaymentStatus("none")}>
+                                      None
+                                    </Button>
+                                  </div>
+                                </div>
+                                {paymentStatus === "partial" && (
+                                  <div className="space-y-2">
+                                    <Label htmlFor="amount">Amount (GHS)</Label>
+                                    <Input
+                                      id="amount"
+                                      type="number"
+                                      min={1}
+                                      value={paymentAmount ?? ""}
+                                      onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                                      placeholder="Enter amount received"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setPaymentDialogOpen(false)} disabled={paymentSaving}>Cancel</Button>
+                                <Button onClick={async () => { setPaymentSaving(true); await handleConfirmPayment(); setPaymentSaving(false) }} disabled={paymentSaving}>
+                                  {paymentSaving ? (<span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving</span>) : "Save"}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive" className="flex-1">
-                                <Trash2 className="w-4 h-4 mr-1" />
-                                Delete
+                              <Button size="sm" variant="destructive" className="flex-1" disabled={deleteLoadingId === reg.id}>
+                                {deleteLoadingId === reg.id ? (
+                                  <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Deleting</span>
+                                ) : (
+                                  <>
+                                    <Trash2 className="w-4 h-4 mr-1" />
+                                    Delete
+                                  </>
+                                )}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -318,6 +457,7 @@ export default function AdminRegistrationsPage() {
                         <TableHead>Course</TableHead>
                         <TableHead>Knowledge</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Payment</TableHead>
                         <TableHead>Registered</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -341,6 +481,14 @@ export default function AdminRegistrationsPage() {
                               {reg.status}
                             </Badge>
                           </TableCell>
+                          <TableCell>
+                            <Badge variant={reg.payment_status === "full" ? "default" : reg.payment_status === "partial" ? "outline" : "secondary"}>
+                              {reg.payment_status ? reg.payment_status : "none"}
+                            </Badge>
+                            {reg.payment_status === "partial" && reg.payment_amount ? (
+                              <span className="ml-2 text-muted-foreground">GHS {reg.payment_amount}</span>
+                            ) : null}
+                          </TableCell>
                           <TableCell>{formatDate(reg.created_at)}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -349,15 +497,77 @@ export default function AdminRegistrationsPage() {
                                   size="sm"
                                   onClick={() => handleApprove(reg)}
                                   className="bg-green-600 hover:bg-green-700"
+                                  disabled={approveLoadingId === reg.id}
                                 >
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Approve
+                                  {approveLoadingId === reg.id ? (
+                                    <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Approving</span>
+                                  ) : (
+                                    <>
+                                      <Check className="w-4 h-4 mr-1" />
+                                      Approve
+                                    </>
+                                  )}
                                 </Button>
                               )}
+                              <Dialog open={paymentDialogOpen && selectedRegistration?.id === reg.id} onOpenChange={setPaymentDialogOpen}>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="secondary" onClick={() => openPaymentDialog(reg)}>
+                                    <CreditCard className="w-4 h-4 mr-1" />
+                                    Confirm Payment
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Confirm Payment</DialogTitle>
+                                    <DialogDescription>
+                                      Set payment status for {reg.full_name}. If partial, enter the amount received.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <Label>Payment Status</Label>
+                                      <div className="flex gap-2">
+                                        <Button type="button" variant={paymentStatus === "full" ? "default" : "outline"} onClick={() => setPaymentStatus("full")}>
+                                          Full
+                                        </Button>
+                                        <Button type="button" variant={paymentStatus === "partial" ? "default" : "outline"} onClick={() => setPaymentStatus("partial")}>
+                                          Partial
+                                        </Button>
+                                        <Button type="button" variant={paymentStatus === "none" ? "default" : "outline"} onClick={() => setPaymentStatus("none")}>
+                                          None
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    {paymentStatus === "partial" && (
+                                      <div className="space-y-2">
+                                        <Label htmlFor="amount-desktop">Amount (GHS)</Label>
+                                        <Input
+                                          id="amount-desktop"
+                                          type="number"
+                                          min={1}
+                                          value={paymentAmount ?? ""}
+                                          onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                                          placeholder="Enter amount received"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <DialogFooter>
+                                    <Button variant="outline" onClick={() => setPaymentDialogOpen(false)} disabled={paymentSaving}>Cancel</Button>
+                                    <Button onClick={async () => { setPaymentSaving(true); await handleConfirmPayment(); setPaymentSaving(false) }} disabled={paymentSaving}>
+                                      {paymentSaving ? (<span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving</span>) : "Save"}
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button size="sm" variant="destructive">
-                                    <Trash2 className="w-4 h-4" />
+                                  <Button size="sm" variant="destructive" disabled={deleteLoadingId === reg.id}>
+                                    {deleteLoadingId === reg.id ? (
+                                      <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Deleting</span>
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>

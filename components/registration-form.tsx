@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from "@/hooks/use-toast"
 import { getClientDb } from "@/lib/firebase/client"
 import { collection, addDoc } from "firebase/firestore"
-import { CheckCircle, AlertCircle } from "lucide-react"
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 
 export function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -261,7 +261,7 @@ export function RegistrationForm() {
                 disabled={isSubmitting}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg"
               >
-                {isSubmitting ? "Submitting..." : "Register Now"}
+                {isSubmitting ? (<span className="inline-flex items-center"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</span>) : "Register Now"}
               </Button>
             </div>
           </form>

@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     const { type = "registration" } = body
 
     // Create Gmail transporter
+    // Create Gmail transporter
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -14,6 +15,82 @@ export async function POST(request: Request) {
         pass: process.env.GMAIL_APP_PASSWORD
       }
     })
+
+    if (type === "payment") {
+      const { full_name, email, payment_status, payment_amount } = body as {
+        full_name: string
+        email: string
+        payment_status: "partial" | "full" | "none"
+        payment_amount?: number
+      }
+      const amountText = payment_status === "partial" ? `Part payment received: GHS ${payment_amount}` : payment_status === "full" ? "Full payment received: GHS 700" : "No payment recorded"
+      const emailHTML = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); color: #fff; padding: 30px; border-radius: 8px; text-align: center; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .content { background: #f9fafb; padding: 30px; margin: 20px 0; border-radius: 8px; }
+              .info-box { background: #fff; padding: 20px; margin: 15px 0; border-left: 4px solid #0ea5e9; border-radius: 4px; }
+              .info-box h3 { color: #0ea5e9; margin-top: 0; }
+              .footer { text-align: center; color: #666; font-size: 12px; padding-top: 20px; border-top: 1px solid #ddd; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>💳 Payment Confirmation</h1>
+                <p>Gh0sT Tech Training Program</p>
+              </div>
+
+              <div class="content">
+                <div class="info-box">
+                  <h3>Hello ${full_name},</h3>
+                  <p>We have updated your payment status for the course.</p>
+                  <p><strong>Status:</strong> ${payment_status.toUpperCase()}</p>
+                  <p><strong>Details:</strong> ${amountText}</p>
+                </div>
+                <p>If you made a part payment, please note that the remaining balance is due during the training period.</p>
+                <p>For any questions, kindly reach out via phone or WhatsApp.</p>
+                <p>Best regards,<br><strong>Gh0sT Tech Team</strong></p>
+              </div>
+
+              <div class="footer">
+                <p>&copy; 2026 Gh0sT Tech. Automated Payment Confirmation.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `
+
+      try {
+        const mailOptions = {
+          from: `"Gh0sT Tech" <${process.env.GMAIL_USER}>`,
+          to: email,
+          subject: payment_status === "full" ? "✅ Payment Confirmed - Full Payment Received" : payment_status === "partial" ? "🟡 Payment Confirmed - Part Payment Received" : "ℹ️ Payment Status Update",
+          html: emailHTML,
+        }
+
+        const info = await transporter.sendMail(mailOptions)
+        console.log("Payment confirmation sent successfully:", info.messageId)
+
+        return Response.json(
+          {
+            success: true,
+            message: "Payment confirmation sent successfully",
+            email_id: info.messageId,
+          },
+          { status: 200 },
+        )
+      } catch (emailError) {
+        console.error("Gmail SMTP error:", emailError)
+        return Response.json({ error: "Failed to send payment confirmation" }, { status: 500 })
+      }
+    }
 
     if (type === "approval") {
       // Handle approval notification
