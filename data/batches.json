@@ -1,0 +1,45 @@
+[
+  {
+    "id": "batch-001",
+    "title": "Batch 1 - Jan 2026",
+    "dates": "2026-01-10 to 2026-01-30",
+    "syllabus": [
+      "PC assembly and diagnostics",
+      "Windows installation and drivers",
+      "Basic networking and cabling",
+      "Troubleshooting and preventive maintenance"
+    ],
+    "attendance": 18,
+    "outcomes": [
+      "50% obtained entry-level placements",
+      "All completed hands-on final assessment"
+    ],
+    "images": [
+      "/training%20images/photo_2026-03-04_01-00-58.jpg",
+      "/training%20images/photo_2026-03-04_01-01-11.jpg",
+      "/training%20images/photo_2026-03-04_01-01-27.jpg",
+      "/training%20images/photo_2026-03-04_01-01-37.jpg"
+    ]
+  },
+  {
+    "id": "batch-002",
+    "title": "Batch 2 - Feb 2026",
+    "dates": "2026-02-05 to 2026-02-25",
+    "syllabus": [
+      "Advanced troubleshooting",
+      "Network configuration",
+      "Soft skills and interview prep"
+    ],
+    "attendance": 22,
+    "outcomes": [
+      "High practical assessment scores",
+      "Several students prepared for certification"
+    ],
+    "images": [
+      "/training%20images/photo_2026-03-04_01-02-23.jpg",
+      "/training%20images/photo_2026-03-04_01-02-43.jpg",
+      "/training%20images/photo_2026-03-04_01-03-25.jpg",
+      "/training%20images/photo_2026-03-04_01-03-37.jpg"
+    ]
+  }
+]

@@ -19,10 +19,11 @@ export function Navbar() {
   }, [])
 
   const navItems = [
-    { label: "Home", href: "#home" },
-    { label: "About", href: "#about" },
-    { label: "Courses", href: "#courses" },
-    { label: "Contact", href: "#contact" },
+    { label: "Home", href: "/#home" },
+    { label: "About", href: "/#about" },
+    { label: "Courses", href: "/#courses" },
+    { label: "Gallery", href: "/training-gallery" },
+    { label: "Contact", href: "/#contact" },
   ]
 
   const toggleMenu = () => setIsOpen(!isOpen)
@@ -63,7 +64,7 @@ export function Navbar() {
 
         {/* CTA Button and Mobile Menu */}
         <div className="flex items-center gap-4">
-          <Link href="#registration" className="hidden sm:block">
+          <Link href="/register" className="hidden sm:block">
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Register Now</Button>
           </Link>
 
@@ -91,7 +92,7 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Link href="#registration" onClick={handleNavClick} className="block">
+            <Link href="/register" onClick={handleNavClick} className="block">
               <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-2">
                 Register Now
               </Button>

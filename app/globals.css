@@ -125,6 +125,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Prevent animations on fixed navbar and WhatsApp button */
 nav[class*="fixed"],
 nav[class*="fixed"] *,

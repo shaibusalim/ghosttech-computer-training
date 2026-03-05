@@ -1,15 +1,49 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { AboutInstructor } from "@/components/about-instructor"
 import { CoursesSection } from "@/components/courses-section"
-import { RegistrationForm } from "@/components/registration-form"
+import { FeaturesSection } from "@/components/features-section"
+import { CurriculumSection } from "@/components/curriculum-section"
+import Gallery from "@/components/gallery"
 import { ContactSection } from "@/components/contact-section"
 import { FloatingWhatsApp } from "@/components/floating-whatsapp"
 import { motion } from "framer-motion"
 
 export default function Home() {
+  const [previewImages, setPreviewImages] = useState(
+    [
+      { src: "/training%20images/photo_2026-03-04_01-00-58.jpg", caption: "Batch 1 hands-on session" },
+      { src: "/training%20images/photo_2026-03-04_01-01-11.jpg", caption: "Hardware identification" },
+      { src: "/training%20images/photo_2026-03-04_01-01-27.jpg", caption: "Networking basics lab" },
+      { src: "/training%20images/photo_2026-03-04_01-01-37.jpg", caption: "System troubleshooting" },
+    ]
+  )
+
+  useEffect(() => {
+    // try to load captions.json from public/training images
+    fetch("/training%20images/captions.json")
+      .then((r) => {
+        if (!r.ok) throw new Error("No captions")
+        return r.json()
+      })
+      .then((data) => {
+        const filenames = Object.keys(data)
+        const items = filenames.map((filename) => ({
+          src: `/training%20images/${encodeURIComponent(filename)}`,
+          caption: data[filename].caption || filename
+        }))
+        // Randomly pick 4 images for the preview
+        const shuffled = [...items].sort(() => 0.5 - Math.random())
+        setPreviewImages(shuffled.slice(0, 4))
+      })
+      .catch(() => {
+        // keep defaults
+      })
+  }, [])
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -42,7 +76,24 @@ export default function Home() {
         <CoursesSection />
       </motion.section>
       <motion.section
-        id="registration"
+        id="features"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <FeaturesSection />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <CurriculumSection />
+      </motion.section>
+      <motion.section
+        id="gallery"
         className="py-20 px-4"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -50,13 +101,21 @@ export default function Home() {
         viewport={{ once: true }}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Join Our Program</h2>
-            <div className="w-24 h-1 bg-primary mx-auto rounded-full" />
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Gallery Preview</h2>
+            <p className="text-foreground/70">Snapshots from recent training sessions.</p>
           </div>
-          <RegistrationForm />
+
+          <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
+            <Gallery images={previewImages} perPage={4} />
+          </motion.div>
+
+          <div className="text-center mt-6">
+            <a href="/training-gallery" className="text-sm text-primary font-semibold">View full gallery →</a>
+          </div>
         </div>
       </motion.section>
+      {/* Registration moved to a dedicated page at /register */}
       <motion.section
         id="contact"
         initial={{ opacity: 0, y: 50 }}

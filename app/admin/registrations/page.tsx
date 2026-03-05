@@ -23,6 +23,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+interface GalleryItemSummary {
+  id: string
+  title: string
+  imageUrl: string
+  category: string
+}
+
 interface Registration {
   id: string
   full_name: string
@@ -49,6 +56,14 @@ export default function AdminRegistrationsPage() {
   const [approveLoadingId, setApproveLoadingId] = useState<string | null>(null)
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
   const [paymentSaving, setPaymentSaving] = useState(false)
+  const [galleryItems, setGalleryItems] = useState<GalleryItemSummary[]>([])
+  const [galleryLoading, setGalleryLoading] = useState(true)
+  const [galleryError, setGalleryError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadTitle, setUploadTitle] = useState("")
+  const [uploadDescription, setUploadDescription] = useState("")
+  const [uploadCategory, setUploadCategory] = useState<"installation" | "virus-removal" | "hardware" | "classroom">("installation")
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -64,6 +79,7 @@ export default function AdminRegistrationsPage() {
       if (response.ok) {
         setIsAuthenticated(true)
         fetchRegistrations()
+        fetchGallery()
       } else {
         router.push("/admin/login")
       }
@@ -90,6 +106,25 @@ export default function AdminRegistrationsPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchGallery = async () => {
+    try {
+      setGalleryLoading(true)
+      const response = await fetch("/api/admin/gallery", { credentials: "include" })
+      if (response.ok) {
+        const data = await response.json()
+        setGalleryItems((data.items || []) as GalleryItemSummary[])
+        setGalleryError(null)
+      } else {
+        setGalleryError("Failed to load gallery")
+      }
+    } catch (error) {
+      console.error("Failed to fetch gallery", error)
+      setGalleryError("Failed to load gallery")
+    } finally {
+      setGalleryLoading(false)
     }
   }
 
@@ -242,6 +277,92 @@ export default function AdminRegistrationsPage() {
     }
   }
 
+  const totalRegistrations = registrations.length
+  const paidRegistrations = registrations.filter(
+    (r) => r.payment_status === "full" || r.payment_status === "partial",
+  ).length
+  const pendingPayments = registrations.filter(
+    (r) => r.payment_status === "none" || !r.payment_status,
+  ).length
+  const totalGalleryImages = galleryItems.length
+
+  const handleUploadGallery = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!uploadFile) {
+      toast({ title: "Error", description: "Please select an image to upload", variant: "destructive" })
+      return
+    }
+
+    try {
+      setUploading(true)
+      const fr = new FileReader()
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        fr.onload = () => resolve(fr.result as string)
+        fr.onerror = () => reject(new Error("File read error"))
+        fr.readAsDataURL(uploadFile)
+      })
+
+      const resp = await fetch("/api/admin/gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: uploadTitle || uploadFile.name,
+          description: uploadDescription,
+          category: uploadCategory,
+          imageData: dataUrl,
+        }),
+      })
+
+      if (!resp.ok) {
+        const text = await resp.text()
+        toast({
+          title: "Upload failed",
+          description: text || "Unable to upload image",
+          variant: "destructive",
+        })
+      } else {
+        toast({ title: "Image uploaded", description: "Gallery updated successfully" })
+        setUploadTitle("")
+        setUploadDescription("")
+        setUploadFile(null)
+        await fetchGallery()
+      }
+    } catch (err) {
+      console.error("Upload error", err)
+      toast({
+        title: "Upload failed",
+        description: "Unexpected error while uploading image",
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDeleteGalleryItem = async (id: string) => {
+    try {
+      const resp = await fetch(`/api/admin/gallery/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+      if (resp.ok) {
+        setGalleryItems((prev) => prev.filter((item) => item.id !== id))
+        toast({ title: "Deleted", description: "Gallery image removed" })
+      } else {
+        const text = await resp.text()
+        toast({ title: "Error", description: text || "Failed to delete image", variant: "destructive" })
+      }
+    } catch (err) {
+      console.error("Delete gallery item error", err)
+      toast({
+        title: "Error",
+        description: "Failed to delete image",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -265,7 +386,36 @@ export default function AdminRegistrationsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 space-y-6">
+        {/* Overview stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total Registrations</CardDescription>
+              <CardTitle className="text-2xl">{totalRegistrations}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Paid Registrations</CardDescription>
+              <CardTitle className="text-2xl">{paidRegistrations}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Pending Payments</CardDescription>
+              <CardTitle className="text-2xl">{pendingPayments}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total Gallery Images</CardDescription>
+              <CardTitle className="text-2xl">{totalGalleryImages}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Registrations table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -330,19 +480,18 @@ export default function AdminRegistrationsPage() {
                           <div>
                             <span className="font-medium">Registered:</span> {formatDate(reg.created_at)}
                           </div>
-                          <div className="col-span-2">
-                            <span className="font-medium">Payment:</span>{" "}
-                            <Badge variant={reg.payment_status === "full" ? "default" : reg.payment_status === "partial" ? "outline" : "secondary"} className="ml-1">
+                          <TableCell>
+                            <Badge variant={reg.payment_status === "full" ? "default" : reg.payment_status === "partial" ? "outline" : "secondary"}>
                               {reg.payment_status ? reg.payment_status : "none"}
                             </Badge>
                             {reg.payment_status === "partial" && reg.payment_amount ? (
                               <span className="ml-2 text-muted-foreground">GHS {reg.payment_amount}</span>
                             ) : null}
-                          </div>
+                          </TableCell>
                         </div>
 
                         <div className="flex gap-2 pt-2">
-                          {reg.status === "pending" && (
+                          {(reg.status === "pending" || reg.status === "awaiting_admin_approval") && (
                             <Button
                               size="sm"
                               onClick={() => handleApprove(reg)}
@@ -492,7 +641,7 @@ export default function AdminRegistrationsPage() {
                           <TableCell>{formatDate(reg.created_at)}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              {reg.status === "pending" && (
+                              {(reg.status === "pending" || reg.status === "awaiting_admin_approval") && (
                                 <Button
                                   size="sm"
                                   onClick={() => handleApprove(reg)}
@@ -594,6 +743,135 @@ export default function AdminRegistrationsPage() {
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Gallery management */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Gallery Management</CardTitle>
+                <CardDescription>Upload new training photos and manage existing gallery items.</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchGallery} disabled={galleryLoading}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${galleryLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleUploadGallery} className="grid gap-4 md:grid-cols-[2fr,1fr] items-start">
+              <div className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="gallery-title">Title</Label>
+                    <Input
+                      id="gallery-title"
+                      value={uploadTitle}
+                      onChange={(e) => setUploadTitle(e.target.value)}
+                      placeholder="e.g. Batch 3 Windows Installation Lab"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="gallery-category">Category</Label>
+                    <select
+                      id="gallery-category"
+                      value={uploadCategory}
+                      onChange={(e) =>
+                        setUploadCategory(e.target.value as "installation" | "virus-removal" | "hardware" | "classroom")
+                      }
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                    >
+                      <option value="installation">Installation</option>
+                      <option value="virus-removal">Virus Removal</option>
+                      <option value="hardware">Hardware</option>
+                      <option value="classroom">Classroom</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="gallery-description">Description</Label>
+                  <Input
+                    id="gallery-description"
+                    value={uploadDescription}
+                    onChange={(e) => setUploadDescription(e.target.value)}
+                    placeholder="Short caption to describe the session"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="gallery-file">Image</Label>
+                  <Input
+                    id="gallery-file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Upload clear photos from real training sessions. Images will appear on the public gallery page once
+                  uploaded.
+                </p>
+                <Button type="submit" disabled={uploading}>
+                  {uploading ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </span>
+                  ) : (
+                    "Upload Image"
+                  )}
+                </Button>
+              </div>
+            </form>
+
+            <div className="border-t border-border/60 pt-4">
+              {galleryLoading ? (
+                <p className="text-sm text-muted-foreground">Loading gallery items...</p>
+              ) : galleryError ? (
+                <p className="text-sm text-destructive">{galleryError}</p>
+              ) : galleryItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No gallery items yet.</p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-3">
+                  {galleryItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="overflow-hidden rounded-lg border border-border/70 bg-card text-sm"
+                    >
+                      <div className="h-32 w-full overflow-hidden bg-black/40">
+                        {/* Use plain img to avoid layout warnings inside admin card */}
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="space-y-1.5 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium truncate">{item.title}</p>
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {item.category}
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-[11px]"
+                          onClick={() => handleDeleteGalleryItem(item.id)}
+                        >
+                          <Trash2 className="mr-1 h-3 w-3" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </main>

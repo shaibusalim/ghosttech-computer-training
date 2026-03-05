@@ -114,6 +114,31 @@ export function AboutInstructor() {
                 )
               })}
             </div>
+
+            <div className="mt-6 space-y-4">
+              <h4 className="text-lg font-semibold">Credentials & Contact</h4>
+              <ul className="text-sm space-y-1">
+                <li>• CompTIA A+ Certification</li>
+                <li>• Cisco CCNA (Network fundamentals)</li>
+                <li>• 7+ years field & teaching experience</li>
+              </ul>
+
+              <div className="mt-4">
+                <p className="text-sm text-foreground/70">Watch a short intro from the instructor:</p>
+                <div className="mt-2 aspect-video rounded overflow-hidden border border-primary/20">
+                  <video
+                    src="/gH0ST.MP4"
+                    controls
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <a href="tel:0541120274" className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md">Call / WhatsApp</a>
+                <a href="mailto:contact@ghosttech.example" className="ml-3 text-sm text-foreground/70">contact@ghosttech.example</a>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

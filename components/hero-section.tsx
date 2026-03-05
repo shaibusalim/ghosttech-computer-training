@@ -4,21 +4,40 @@ import type React from "react"
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowRight, Code2, Database, Zap, Trophy, Terminal } from "lucide-react"
+import { ArrowRight, Code2, Database, Zap, Terminal } from "lucide-react"
 import { useEffect, useState } from "react"
-import Image from "next/image"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
-import Autoplay from "embla-carousel-autoplay"
+import { collection, getDocs, query, where } from "firebase/firestore"
+import { getClientDb } from "@/lib/firebase/client"
+import { MAX_SEATS_PER_COHORT } from "@/lib/utils"
+import batches from "@/data/batches.json"
+// carousel removed — hero now uses background images
 
-// Counter Component (no animation)
-function Counter({ end }: { end: number }) {
-  return <span>{end}</span>
+// Counter Component (animated count-up)
+function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
+  const [value, setValue] = useState(0)
+
+  useEffect(() => {
+    let frame: number
+    const duration = 1200
+    const start = performance.now()
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.round(end * eased))
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [end])
+
+  return (
+    <span>
+      {value}
+      {suffix}
+    </span>
+  )
 }
 
 // Typing Effect Component
@@ -52,7 +71,7 @@ function TypingEffect({ words }: { words: string[] }) {
   }, [displayedText, wordIndex, isDeleting, words])
 
   return (
-    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+    <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
       {displayedText}
       <span className="animate-pulse">|</span>
     </span>
@@ -143,71 +162,142 @@ function SocialProofAvatars() {
 export function HeroSection() {
   const typingWords = ["PC Hardware Assembly", "System Diagnostics", "Network Configuration", "Software Installation"]
 
+  const [seatsRemaining, setSeatsRemaining] = useState<number | null>(null)
+  const [seatsLoading, setSeatsLoading] = useState(true)
+  const [seatsError, setSeatsError] = useState<string | null>(null)
+
+  // Fix mobile 100vh issues by setting a CSS variable --vh to window.innerHeight * 0.01
+  useEffect(() => {
+    function setVh() {
+      if (typeof window === "undefined") return
+      document.documentElement.style.setProperty("--vh", `${window.innerHeight * 0.01}px`)
+    }
+    setVh()
+    window.addEventListener("resize", setVh)
+    return () => window.removeEventListener("resize", setVh)
+  }, [])
+
+  // Fetch confirmed registrations to calculate remaining seats
+  useEffect(() => {
+    async function fetchSeats() {
+      try {
+        const db = getClientDb()
+        const registrationsRef = collection(db, "registrations")
+        const approvedQuery = query(registrationsRef, where("status", "==", "approved"))
+        const snapshot = await getDocs(approvedQuery)
+        const confirmedCount = snapshot.size
+        const remaining = Math.max(0, MAX_SEATS_PER_COHORT - confirmedCount)
+        setSeatsRemaining(remaining)
+        setSeatsError(null)
+      } catch (error) {
+        console.error("Failed to load seat count", error)
+        setSeatsError("Limited seats available")
+      } finally {
+        setSeatsLoading(false)
+      }
+    }
+
+    fetchSeats()
+  }, [])
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5 pointer-events-none" />
+    <section
+      className="relative flex items-center justify-center px-4 py-12 md:py-20 overflow-hidden bg-linear-to-b from-slate-950 via-slate-900 to-black"
+      aria-label="Hero section"
+      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+    >
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-20"
+        style={{ backgroundImage: 'url("/hero/photo_2026-03-04_01-30-34.jpg")' }}
+      />
+      <div className="absolute inset-0 bg-linear-to-br from-primary/20 via-background to-accent/10 pointer-events-none z-10" />
+
+      {/* Subtle animated grid / particles */}
+      <div className="pointer-events-none absolute inset-0 z-10 opacity-40">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.08)_0,transparent_55%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-size-[80px_80px]" />
+      </div>
 
       {/* Tech stack floating icons */}
       <TechStackIcons />
 
-      <div className="relative z-10 max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="relative z-20 max-w-6xl w-full grid grid-cols-1 gap-12 items-center">
         {/* Left content */}
         <div className="space-y-8">
-          {/* Badge */}
-          <div>
-            <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-full">
-              <p className="text-sm font-semibold text-primary">Professional IT Training Center</p>
+            {/* Top badge row */}
+            <div className="flex items-center gap-3">
+              <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
+                <p className="text-xs font-semibold text-primary">Professional IT Training Center</p>
+              </div>
+              {Array.isArray(batches) && batches.length > 0 && (
+                <div className="inline-block px-3 py-1 bg-accent/10 border border-accent/30 rounded-full">
+                  <p className="text-xs font-semibold text-accent">{batches[0].title} • {batches[0].dates}</p>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Main heading */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-balance leading-tight">
-            Master <TypingEffect words={typingWords} />
-          </h1>
+            {/* Main heading (clear value prop) */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-balance leading-tight">
+              Gh0sTTech Practical IT &amp; System Engineering Program
+            </h1>
 
-          {/* Subheading */}
-          <p className="text-xl text-foreground/70 text-balance leading-relaxed max-w-lg">
-            Gain industry-recognized certifications in PC maintenance, Windows administration, and network troubleshooting.
-            Learn from certified IT professionals with enterprise experience in Tamale, Gurugu, Ghana.
-          </p>
+            {/* Supporting subheading */}
+            <p className="text-lg text-foreground/70 leading-relaxed max-w-lg">
+              Hands-on training in Windows installation, system repair, virus removal, and real-world troubleshooting.
+            </p>
 
-          {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Link href="#registration" className="w-full sm:w-auto">
-              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg group shadow-lg shadow-primary/30">
-                Get Started <ArrowRight className="ml-2" size={20} />
-              </Button>
-            </Link>
-            <Link href="#contact" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                className="w-full border-primary text-primary hover:bg-primary/10 font-semibold py-6 text-lg bg-transparent"
-              >
-                Learn More
-              </Button>
-            </Link>
-          </div>
+            {/* CTA buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Link href="/register" className="w-full sm:w-auto">
+                <Button className="w-full bg-linear-to-r from-accent to-primary text-primary-foreground font-bold py-5 text-lg shadow-lg">
+                  Secure Your Seat <ArrowRight className="ml-2" size={18} />
+                </Button>
+              </Link>
+              <Link href="#curriculum" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10 font-semibold py-5 text-lg">
+                  View Curriculum
+                </Button>
+              </Link>
+            </div>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 pt-8">
             <div className="flex flex-col">
               <p className="text-3xl font-bold text-primary">
-                <Counter end={500} />+
+                <Counter end={120} suffix="+" />
               </p>
-              <p className="text-sm text-foreground/60">Graduates Placed in IT Roles</p>
+              <p className="text-sm text-foreground/60">Students Trained</p>
             </div>
             <div className="flex flex-col">
               <p className="text-3xl font-bold text-accent">
-                <Counter end={15} />+
+                <Counter end={8} suffix="+" />
               </p>
-              <p className="text-sm text-foreground/60">Years Combined Instructor Experience</p>
+              <p className="text-sm text-foreground/60">Cohorts Completed</p>
             </div>
             <div className="flex flex-col">
               <p className="text-3xl font-bold text-primary">
-                <Counter end={98} />%
+                <Counter end={45} suffix="+" />
               </p>
-              <p className="text-sm text-foreground/60">Certification Success Rate</p>
+              <p className="text-sm text-foreground/60">Practical Sessions Held</p>
             </div>
+          </div>
+
+          {/* Seat counter */}
+          <div className="mt-4">
+            <p className="inline-flex items-center rounded-full bg-black/40 border border-primary/40 px-4 py-2 text-sm text-primary-foreground/90 backdrop-blur">
+              <span className="mr-2 h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              {seatsLoading && "Calculating available seats..."}
+              {!seatsLoading && seatsError && seatsError}
+              {!seatsLoading && !seatsError && seatsRemaining != null && (
+                <>
+                  Only{" "}
+                  <span className="mx-1 font-semibold text-accent">
+                    {seatsRemaining}
+                  </span>
+                  seats remaining for this cohort
+                </>
+              )}
+            </p>
           </div>
 
           {/* Social proof with avatars */}
@@ -216,40 +306,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Right carousel with images */}
-        <div className="flex justify-center">
-          <div className="relative w-full max-w-md">
-            <Carousel className="w-full" plugins={[Autoplay({ delay: 3000 })]}>
-              <CarouselContent>
-                {["/img.png", "/img2.png", "/img3.png", "/img4.png"].map((src, index) => (
-                  <CarouselItem key={index}>
-                    <div className="relative aspect-square group">
-                      {/* Image */}
-                      <div className="relative w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-primary/20">
-                        <img
-                          src={src}
-                          alt={`Gh0sT Tech Image ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-                      </div>
-
-                      {/* Overlay */}
-                      <div className="absolute bottom-4 left-4 right-4 bg-background/80 backdrop-blur-md rounded-lg p-3 border border-primary/30">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-foreground/70">Interactive Learning</span>
-                          <Trophy className="w-4 h-4 text-accent" />
-                        </div>
-                      </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </div>
-        </div>
+        {/* carousel removed */}
       </div>
 
       {/* Scroll indicator */}
