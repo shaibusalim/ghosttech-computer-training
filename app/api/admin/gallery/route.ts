@@ -61,6 +61,12 @@ export async function POST(request: NextRequest) {
     }
 
     const bucket = getAdminStorageBucket()
+    
+    if (!bucket.name) {
+      console.error("[v0] Storage bucket is not configured or not found.")
+      return Response.json({ error: "Storage bucket not configured. Please check your .env file." }, { status: 500 })
+    }
+
     const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
     const timestamp = Date.now()
     const extension = mime.split("/")[1] || "jpg"

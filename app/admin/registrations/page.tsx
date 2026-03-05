@@ -81,10 +81,10 @@ export default function AdminRegistrationsPage() {
         fetchRegistrations()
         fetchGallery()
       } else {
-        router.push("/admin/login")
+        router.push("/gh0st-secure-access")
       }
     } catch {
-      router.push("/admin/login")
+      router.push("/gh0st-secure-access")
     }
   }
 
@@ -97,6 +97,8 @@ export default function AdminRegistrationsPage() {
       if (response.ok) {
         const data = await response.json()
         setRegistrations(data.registrations || [])
+      } else {
+        router.push("/gh0st-secure-access")
       }
     } catch (error) {
       toast({
@@ -131,7 +133,7 @@ export default function AdminRegistrationsPage() {
   const handleLogout = async () => {
     try {
       await fetch("/api/admin/logout", { method: "POST", credentials: "include" })
-      router.push("/admin/login")
+      router.push("/gh0st-secure-access")
     } catch {
       toast({
         title: "Error",
@@ -480,14 +482,15 @@ export default function AdminRegistrationsPage() {
                           <div>
                             <span className="font-medium">Registered:</span> {formatDate(reg.created_at)}
                           </div>
-                          <TableCell>
+                          <div className="col-span-2 mt-1">
+                            <span className="font-medium mr-2">Payment:</span>
                             <Badge variant={reg.payment_status === "full" ? "default" : reg.payment_status === "partial" ? "outline" : "secondary"}>
                               {reg.payment_status ? reg.payment_status : "none"}
                             </Badge>
                             {reg.payment_status === "partial" && reg.payment_amount ? (
-                              <span className="ml-2 text-muted-foreground">GHS {reg.payment_amount}</span>
+                              <span className="ml-2 text-muted-foreground text-xs font-semibold underline underline-offset-4 decoration-primary/30">GHS {reg.payment_amount}</span>
                             ) : null}
-                          </TableCell>
+                          </div>
                         </div>
 
                         <div className="flex gap-2 pt-2">

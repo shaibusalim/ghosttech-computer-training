@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("")
@@ -54,23 +54,24 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-primary/20 shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">Admin Portal</CardTitle>
           <CardDescription>
-            Enter your credentials to access the admin panel
+            Secure access for authorized personnel only
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Email Address</Label>
               <Input
                 id="username"
-                type="text"
+                type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                placeholder="Enter admin email"
+                className="bg-background/50"
                 required
               />
             </div>
@@ -82,22 +83,21 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
+                className="bg-background/50"
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (<span className="inline-flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</span>) : "Login"}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 font-semibold" disabled={isLoading}>
+              {isLoading ? (
+                <span className="inline-flex items-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Authenticating...
+                </span>
+              ) : (
+                "Access Dashboard"
+              )}
             </Button>
           </form>
-          <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-300">Note</p>
-              <p className="text-xs text-foreground/80">
-                This login is for authorized administrators only.
-              </p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -136,7 +136,7 @@ export function AboutInstructor() {
 
               <div className="pt-4">
                 <a href="tel:0541120274" className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md">Call / WhatsApp</a>
-                <a href="mailto:contact@ghosttech.example" className="ml-3 text-sm text-foreground/70">contact@ghosttech.example</a>
+                <a href="mailto:contact@ghosttech.example" className="ml-3 text-sm text-foreground/70">cybergh0st404@protonmail.com</a>
               </div>
             </div>
           </motion.div>
