@@ -225,7 +225,7 @@ export function HeroSection() {
         {/* Left content */}
         <div className="space-y-8">
             {/* Top badge row */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
                 <p className="text-xs font-semibold text-primary">Professional IT Training Center</p>
               </div>
