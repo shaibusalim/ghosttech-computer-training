@@ -1,83 +1,98 @@
 "use client"
 
 import { useSearchParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Loader2, ShieldCheck, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-export default function PaystackCallbackPage() {
+function VerifyPayment() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
-  const [verifying, setVerifying] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const registrationId = searchParams.get("registrationId")
+  const trxref = searchParams.get("trxref")
   const reference = searchParams.get("reference")
 
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
+  const [message, setMessage] = useState("Verifying your payment...")
+
   useEffect(() => {
-    async function runVerify() {
-      if (!reference) {
-        setError("Missing transaction reference.")
-        setVerifying(false)
+    const verifyPayment = async () => {
+      if (!registrationId || (!trxref && !reference)) {
+        setStatus("error")
+        setMessage("Invalid payment details. Please try again.")
         return
       }
+
       try {
-        const resp = await fetch(`/api/payments/paystack/verify?reference=${encodeURIComponent(reference)}`)
+        const resp = await fetch("/api/payments/paystack/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registrationId, reference: trxref || reference }),
+        })
+
         const json = await resp.json()
-        if (!resp.ok || !json.success) {
-          setError(json.error || "Unable to verify payment.")
-          setVerifying(false)
+
+        if (!resp.ok) {
+          setStatus("error")
+          setMessage(json.error || "Failed to verify payment. Please contact support.")
           return
         }
-        toast({
-          title: "Payment successful",
-          description: "Your payment has been verified. An admin will confirm your seat shortly.",
-        })
-        router.replace("/registration-success")
+
+        setStatus("success")
+        setMessage("Payment verified successfully! Your seat is booked.")
+        toast({ title: "Payment Successful", description: "Your registration is complete." })
+
+        setTimeout(() => {
+          router.push("/registration-success")
+        }, 3000)
+
       } catch (err) {
-        console.error("Verify error", err)
-        setError("Something went wrong while verifying payment.")
-        setVerifying(false)
+        console.error("Payment verification error", err)
+        setStatus("error")
+        setMessage("An unexpected error occurred. Please contact support.")
       }
     }
-    runVerify()
-  }, [reference, router, toast])
+
+    verifyPayment()
+  }, [registrationId, trxref, reference, router, toast])
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle>Verifying Payment</CardTitle>
-              <CardDescription>
-                {reference ? `Reference: ${reference}` : "Checking your transaction details."}
-              </CardDescription>
-            </div>
+    <Card className="max-w-md w-full">
+      <CardHeader className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+            {status === "loading" && <Loader2 className="h-5 w-5 text-primary animate-spin" />}
+            {status === "success" && <ShieldCheck className="h-5 w-5 text-green-500" />}
+            {status === "error" && <AlertTriangle className="h-5 w-5 text-red-500" />}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {verifying && (
-            <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <p>Please wait while we confirm your payment with Paystack.</p>
-            </div>
-          )}
-          {!verifying && error && (
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <p className="text-destructive">{error}</p>
-              <Button size="sm" variant="outline" onClick={() => router.push("/register")}>
-                Go back to registration
-              </Button>
-            </div>
-          )}
+          <div>
+            <CardTitle>
+              {status === "loading" && "Verifying Payment"}
+              {status === "success" && "Payment Successful"}
+              {status === "error" && "Payment Failed"}
+            </CardTitle>
+            <CardDescription>{message}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      {status !== "loading" && (
+        <CardContent>
+          <Button onClick={() => router.push("/")} className="w-full">Go to Homepage</Button>
         </CardContent>
-      </Card>
-    </main>
+      )}
+    </Card>
   )
 }
 
+export default function CallbackPage() {
+  return (
+    <main className="min-h-screen flex items-center justify-center px-4">
+      <Suspense fallback={<div>Loading...</div>}>
+        <VerifyPayment />
+      </Suspense>
+    </main>
+  )
+}

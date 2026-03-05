@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         ]
       },
       channels: ['mobile_money'],
-      callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/register/payment/verify?registrationId=${registrationId}`,
+      callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/register/payment/callback?registrationId=${registrationId}`,
     }
 
     const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
