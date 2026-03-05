@@ -49,11 +49,11 @@ export default function Home() {
       <Navbar />
       <motion.section
         id="home"
-        className="pt-24"
-        initial={{ opacity: 0, y: 50 }}
+        className="pt-20"
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true, margin: "-10%" }}
       >
         <HeroSection />
       </motion.section>

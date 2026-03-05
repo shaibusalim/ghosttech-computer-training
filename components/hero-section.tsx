@@ -81,7 +81,7 @@ function TypingEffect({ words }: { words: string[] }) {
 // Scroll Indicator Component
 function ScrollIndicator() {
   return (
-    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2">
+    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex-col items-center gap-2 hidden md:flex">
       <span className="text-sm text-foreground/60">Scroll to explore</span>
       <svg
         className="w-6 h-6 text-primary"
@@ -202,9 +202,9 @@ export function HeroSection() {
 
   return (
     <section
-      className="relative flex items-center justify-center px-4 py-12 md:py-20 overflow-hidden bg-linear-to-b from-slate-950 via-slate-900 to-black"
+      className="relative flex items-center justify-center px-4 py-8 md:py-20 bg-linear-to-b from-slate-950 via-slate-900 to-black overflow-visible"
       aria-label="Hero section"
-      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+      style={{ minHeight: "calc(var(--vh, 1vh) * 85)" }}
     >
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-20"
@@ -221,17 +221,17 @@ export function HeroSection() {
       {/* Tech stack floating icons */}
       <TechStackIcons />
 
-      <div className="relative z-20 max-w-6xl w-full grid grid-cols-1 gap-12 items-center">
+      <div className="relative z-20 max-w-6xl w-full grid grid-cols-1 gap-8 md:gap-12 items-center pb-12 md:pb-0">
         {/* Left content */}
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
             {/* Top badge row */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
-                <p className="text-xs font-semibold text-primary">Professional IT Training Center</p>
+                <p className="text-[10px] sm:text-xs font-semibold text-primary">Professional IT Training Center</p>
               </div>
-              {Array.isArray(batches) && batches.length > 0 && (
+              {Array.isArray(batches) && batches.length > 0 && batches[0] && (
                 <div className="inline-block px-3 py-1 bg-accent/10 border border-accent/30 rounded-full">
-                  <p className="text-xs font-semibold text-accent">{batches[0].title} • {batches[0].dates}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-accent">{batches[0].title} • {batches[0].dates}</p>
                 </div>
               )}
             </div>
@@ -242,7 +242,7 @@ export function HeroSection() {
             </h1>
 
             {/* Supporting subheading */}
-            <p className="text-lg text-foreground/70 leading-relaxed max-w-lg">
+            <p className="text-base md:text-lg text-foreground/70 leading-relaxed max-w-lg">
               Hands-on training in Windows installation, system repair, virus removal, and real-world troubleshooting.
             </p>
 
@@ -261,24 +261,24 @@ export function HeroSection() {
             </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-8">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 md:pt-8 border-t border-primary/10">
             <div className="flex flex-col">
-              <p className="text-3xl font-bold text-primary">
+              <p className="text-2xl md:text-3xl font-bold text-primary">
                 <Counter end={120} suffix="+" />
               </p>
-              <p className="text-sm text-foreground/60">Students Trained</p>
+              <p className="text-[10px] sm:text-sm text-foreground/60 uppercase tracking-tight">Students Trained</p>
             </div>
             <div className="flex flex-col">
-              <p className="text-3xl font-bold text-accent">
+              <p className="text-2xl md:text-3xl font-bold text-accent">
                 <Counter end={8} suffix="+" />
               </p>
-              <p className="text-sm text-foreground/60">Cohorts Completed</p>
+              <p className="text-[10px] sm:text-sm text-foreground/60 uppercase tracking-tight">Cohorts Completed</p>
             </div>
             <div className="flex flex-col">
-              <p className="text-3xl font-bold text-primary">
+              <p className="text-2xl md:text-3xl font-bold text-primary">
                 <Counter end={45} suffix="+" />
               </p>
-              <p className="text-sm text-foreground/60">Practical Sessions Held</p>
+              <p className="text-[10px] sm:text-sm text-foreground/60 uppercase tracking-tight">Practical Sessions</p>
             </div>
           </div>
 
