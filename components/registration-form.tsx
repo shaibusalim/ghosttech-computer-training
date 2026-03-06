@@ -40,12 +40,37 @@ export function RegistrationForm() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    // Clear error when value changes
+    if (errors[name]) {
+      setErrors((prev) => {
+        const { [name]: _, ...rest } = prev
+        return rest
+      })
+    }
   }
 
-
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      if (step < 3) {
+        handleNext()
+      } else if (formData.termsAccepted) {
+        // Only submit via Enter on Step 3 if terms are already accepted
+        // to avoid accidental error toast
+        handleFormSubmit()
+      }
+    }
+  }
 
   const handleRadioChange = (value: string) => {
     setFormData((prev) => ({ ...prev, previous_knowledge: value }))
+    // Clear error when value changes
+    if (errors.previous_knowledge) {
+      setErrors((prev) => {
+        const { previous_knowledge, ...rest } = prev
+        return rest
+      })
+    }
   }
 
   const validateStep = (currentStep: 1 | 2 | 3) => {
@@ -73,26 +98,49 @@ export function RegistrationForm() {
     }
 
     setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) {
-      toast({ title: "Error", description: "Please fix the errors in this step", variant: "destructive" })
-      return false
+    const errorKeys = Object.keys(newErrors)
+    return {
+      isValid: errorKeys.length === 0,
+      firstError: errorKeys.length > 0 ? newErrors[errorKeys[0]] : null,
     }
-    return true
   }
 
   const handleNext = () => {
-    if (validateStep(step)) {
-      setStep((prev) => (prev === 3 ? prev : ((prev + 1) as 1 | 2 | 3)))
+    const { isValid, firstError } = validateStep(step)
+    if (isValid) {
+      const nextStep = step === 3 ? step : ((step + 1) as 1 | 2 | 3)
+      setErrors({})
+      setStep(nextStep)
+    } else {
+      toast({
+        title: "Required Information",
+        description: firstError || "Please complete all required fields",
+        variant: "destructive",
+      })
     }
   }
 
   const handleBack = () => {
+    setErrors({})
     setStep((prev) => (prev === 1 ? prev : ((prev - 1) as 1 | 2 | 3)))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateStep(3)) return
+  const handleFormSubmit = async () => {
+    if (step < 3) {
+      handleNext()
+      return
+    }
+
+    const { isValid, firstError } = validateStep(3)
+    if (!isValid) {
+      toast({
+        title: "Agreement Required",
+        description: firstError || "You must accept the terms to continue",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -112,10 +160,7 @@ export function RegistrationForm() {
         created_at: new Date().toISOString(),
       }
 
-      const { data, error } = await supabase
-        .from('registrations')
-        .insert([registrationData])
-        .select()
+      const { data, error } = await supabase.from("registrations").insert([registrationData]).select()
 
       if (error) throw error
 
@@ -178,7 +223,7 @@ export function RegistrationForm() {
           </motion.div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleKeyDown} className="space-y-6">
             {/* Step indicator */}
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
               <span>Step {step} of 3</span>
@@ -397,7 +442,8 @@ export function RegistrationForm() {
                 </Button>
               ) : (
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={handleFormSubmit}
                   disabled={isSubmitting}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg"
                 >
