@@ -5,13 +5,15 @@ export async function POST() {
     const cookieStore = await cookies()
 
     // Clear the admin auth cookie
-    cookieStore.set('admin_auth', '', {
+    const commonCookieOpts = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 0, // Expire immediately
-      path: '/'
-    })
+      sameSite: 'strict' as const,
+      path: '/',
+    }
+    cookieStore.set('admin_auth', '', { ...commonCookieOpts, maxAge: 0 })
+    cookieStore.set('mfa_pending', '', { ...commonCookieOpts, maxAge: 0 })
+    cookieStore.set('mfa_code_hash', '', { ...commonCookieOpts, maxAge: 0 })
 
     return Response.json({ success: true }, { status: 200 })
   } catch {

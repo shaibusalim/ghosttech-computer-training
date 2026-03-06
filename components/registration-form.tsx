@@ -12,7 +12,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/lib/supabase/client"
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -155,16 +154,18 @@ export function RegistrationForm() {
         education_level: formData.education_level,
         experience_level: formData.experience_level,
         motivation: formData.motivation,
-        status: "pending_payment",
-        payment_status: "none",
-        created_at: new Date().toISOString(),
       }
 
-      const { data, error } = await supabase.from("registrations").insert([registrationData]).select()
-
-      if (error) throw error
-
-      const docId = data[0].id
+      const resp = await fetch("/api/registrations/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registrationData),
+      })
+      const json = await resp.json()
+      if (!resp.ok) {
+        throw new Error(json.error || "Failed to submit")
+      }
+      const docId = json.id
 
       try {
         const emailResponse = await fetch("/api/send-confirmation", {
@@ -184,7 +185,6 @@ export function RegistrationForm() {
         console.error("[v0] Email error (registration still completed):", emailError)
       }
 
-      // Redirect to payment page
       toast({ title: "Registration captured", description: "Continue to payment to secure your seat." })
       router.push(`/register/payment?registrationId=${encodeURIComponent(docId)}`)
     } catch (error) {

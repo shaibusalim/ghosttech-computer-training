@@ -127,10 +127,17 @@ export function AboutInstructor() {
                 <p className="text-sm text-foreground/70">Watch a short intro from the instructor:</p>
                 <div className="mt-2 aspect-video rounded overflow-hidden border border-primary/20">
                   <video
-                    src="/gH0ST.MP4"
-                    controls
                     className="w-full h-full"
-                  />
+                    controls
+                    playsInline
+                    preload="metadata"
+                    muted
+                    autoPlay
+                    loop
+                  >
+                    <source src="/ghost.MP4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
               </div>
 

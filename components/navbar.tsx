@@ -44,7 +44,9 @@ export function Navbar() {
             <Image
               src="/logo.png"
               alt="Gh0sT Tech Logo"
-              fill
+              width={104}
+              height={64}
+              priority
               className="object-contain"
             />
           </div>
