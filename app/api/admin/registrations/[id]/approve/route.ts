@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function POST(
   request: NextRequest,
@@ -19,14 +19,16 @@ export async function POST(
       return Response.json({ error: "Invalid auth cookie" }, { status: 401 })
     }
 
-    const db = getAdminDb()
     const { id } = await context.params
     const { email, full_name, course_selection } = await request.json()
 
     // Update the registration status to approved
-    await db.collection("registrations").doc(id).update({
-      status: "approved"
-    })
+    const { error: updateError } = await supabaseAdmin
+      .from('registrations')
+      .update({ status: 'approved' })
+      .eq('id', id)
+
+    if (updateError) throw updateError
 
     // Send approval email
     try {

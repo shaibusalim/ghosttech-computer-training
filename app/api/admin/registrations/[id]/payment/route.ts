@@ -1,7 +1,6 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin"
-import admin from "firebase-admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 type PaymentStatus = "none" | "partial" | "full"
 
@@ -38,11 +37,13 @@ export async function POST(
       return Response.json({ error: "Invalid payment_amount for partial payment" }, { status: 400 })
     }
 
-    const db = getAdminDb()
-    const docRef = db.collection("registrations").doc(id)
-    const doc = await docRef.get()
+    const { data: doc, error: fetchError } = await supabaseAdmin
+      .from('registrations')
+      .select('id')
+      .eq('id', id)
+      .single()
 
-    if (!doc.exists) {
+    if (fetchError || !doc) {
       return Response.json({ error: "Registration not found" }, { status: 404 })
     }
 
@@ -53,10 +54,15 @@ export async function POST(
     if (payment_status === "partial") {
       updateData.payment_amount = payment_amount
     } else {
-      updateData.payment_amount = admin.firestore.FieldValue.delete()
+      updateData.payment_amount = null
     }
 
-    await docRef.update(updateData)
+    const { error: updateError } = await supabaseAdmin
+      .from('registrations')
+      .update(updateData)
+      .eq('id', id)
+
+    if (updateError) throw updateError
 
     try {
       const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-admin-notification`, {

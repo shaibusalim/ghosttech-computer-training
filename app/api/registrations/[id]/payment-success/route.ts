@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function POST(
   _request: NextRequest,
@@ -7,18 +7,25 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params
-    const db = getAdminDb()
-    const docRef = db.collection("registrations").doc(id)
-    const doc = await docRef.get()
+    const { data: doc, error: fetchError } = await supabaseAdmin
+      .from('registrations')
+      .select('id')
+      .eq('id', id)
+      .single()
 
-    if (!doc.exists) {
+    if (fetchError || !doc) {
       return Response.json({ error: "Registration not found" }, { status: 404 })
     }
 
-    await docRef.update({
-      payment_status: "full",
-      status: "awaiting_admin_approval",
-    })
+    const { error: updateError } = await supabaseAdmin
+      .from('registrations')
+      .update({
+        payment_status: "full",
+        status: "awaiting_admin_approval",
+      })
+      .eq('id', id)
+
+    if (updateError) throw updateError
 
     return Response.json({ success: true }, { status: 200 })
   } catch (error) {

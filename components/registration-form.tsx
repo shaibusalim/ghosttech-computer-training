@@ -12,8 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { getClientDb } from "@/lib/firebase/client"
-import { collection, addDoc } from "firebase/firestore"
+import { supabase } from "@/lib/supabase/client"
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -97,7 +96,6 @@ export function RegistrationForm() {
     setIsSubmitting(true)
 
     try {
-      const db = getClientDb()
       const registrationData = {
         full_name: formData.full_name,
         phone_number: formData.phone_number,
@@ -114,7 +112,14 @@ export function RegistrationForm() {
         created_at: new Date().toISOString(),
       }
 
-      const docRef = await addDoc(collection(db, "registrations"), registrationData)
+      const { data, error } = await supabase
+        .from('registrations')
+        .insert([registrationData])
+        .select()
+
+      if (error) throw error
+
+      const docId = data[0].id
 
       try {
         const emailResponse = await fetch("/api/send-confirmation", {
@@ -136,7 +141,7 @@ export function RegistrationForm() {
 
       // Redirect to payment page
       toast({ title: "Registration captured", description: "Continue to payment to secure your seat." })
-      router.push(`/register/payment?registrationId=${encodeURIComponent(docRef.id)}`)
+      router.push(`/register/payment?registrationId=${encodeURIComponent(docId)}`)
     } catch (error) {
       console.error("[v0] Unexpected error:", error)
       toast({
@@ -166,8 +171,8 @@ export function RegistrationForm() {
           >
             <CardTitle className="text-3xl">Ready to Start Learning?</CardTitle>
             <CardDescription className="text-base">
-              Gh0sTTech Practical IT & System Engineering Program — Total course fee is GHS 700. 
-              A non-refundable registration deposit of <span className="font-bold text-primary">GHS 300</span> is required to secure your seat. 
+              Gh0sTTech Practical IT & System Engineering Program — Total course fee is GHS 700.
+              A non-refundable registration deposit of <span className="font-bold text-primary">GHS 300</span> is required to secure your seat.
               The balance of GHS 400 is payable before the first session starts.
             </CardDescription>
           </motion.div>

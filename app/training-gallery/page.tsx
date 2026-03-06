@@ -4,8 +4,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
-import { getClientDb } from "@/lib/firebase/client"
-import { collection, getDocs, orderBy, query } from "firebase/firestore"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { supabase } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
@@ -37,21 +38,21 @@ export default function TrainingGalleryPage() {
   useEffect(() => {
     async function load() {
       try {
-        const db = getClientDb()
-        const ref = collection(db, "gallery")
-        const q = query(ref, orderBy("createdAt", "desc"))
-        const snapshot = await getDocs(q)
-        const mapped: GalleryItem[] = snapshot.docs.map((doc) => {
-          const data = doc.data() as Partial<GalleryItem>
-          return {
-            id: doc.id,
-            title: data.title ?? "Untitled",
-            description: data.description ?? "",
-            category: (data.category as CategoryId) ?? "installation",
-            imageUrl: data.imageUrl ?? "",
-            createdAt: data.createdAt,
-          }
-        })
+        const { data, error } = await supabase
+          .from('gallery')
+          .select('*')
+          .order('createdat', { ascending: false })
+
+        if (error) throw error
+
+        const mapped: GalleryItem[] = data.map((item) => ({
+          id: item.id,
+          title: item.title ?? "Untitled",
+          description: item.description ?? "",
+          category: (item.category as CategoryId) ?? "installation",
+          imageUrl: item.imageurl ?? "",
+          createdAt: item.createdat,
+        }))
         setItems(mapped)
         setError(null)
       } catch (err) {
@@ -77,7 +78,16 @@ export default function TrainingGalleryPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-6xl mx-auto px-4 pt-8">
+        <Link
+          href="/"
+          className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20 text-sm font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          BACK TO HOME
+        </Link>
+      </div>
+      <section className="max-w-6xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-10 text-center">
           <p className="inline-block rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary uppercase tracking-wide">
             Training Gallery
@@ -155,13 +165,14 @@ export default function TrainingGalleryPage() {
                       />
                     </div>
                   </div>
-                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  {/* Enhanced overlay for better text contrast */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 transition-opacity group-hover:opacity-100" />
                 </div>
-                <div className="absolute inset-x-0 bottom-0 p-3 text-left">
-                  <p className="text-xs uppercase tracking-wide text-primary-foreground/80">
+                <div className="absolute inset-x-0 bottom-0 p-4 text-left z-20">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
                     {CATEGORIES.find((c) => c.id === item.category)?.label ?? "Gallery"}
                   </p>
-                  <p className="mt-0.5 text-sm font-semibold text-primary-foreground">
+                  <p className="mt-1 text-sm font-bold text-white drop-shadow-md">
                     {item.title}
                   </p>
                 </div>
@@ -199,22 +210,22 @@ export default function TrainingGalleryPage() {
                   loading="eager"
                 />
               </div>
-              <div className="flex items-start justify-between gap-4 border-t border-border/70 bg-card px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold">{selectedItem.title}</p>
-                  {selectedItem.description && (
-                    <p className="mt-1 text-xs text-foreground/70">
-                      {selectedItem.description}
-                    </p>
-                  )}
+              <div className="flex flex-col gap-1 border-t border-primary/20 bg-slate-900 px-6 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-lg font-bold text-white tracking-tight">{selectedItem.title}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(null)}
+                    className="rounded-full bg-primary/10 border border-primary/30 px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+                  >
+                    CLOSE
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(null)}
-                  className="rounded-full border border-border/70 bg-card px-3 py-1 text-xs font-medium text-foreground/80 hover:bg-primary hover:text-primary-foreground"
-                >
-                  Close
-                </button>
+                {selectedItem.description && (
+                  <p className="text-sm text-slate-300/90 leading-relaxed max-w-2xl">
+                    {selectedItem.description}
+                  </p>
+                )}
               </div>
             </motion.div>
           </motion.div>

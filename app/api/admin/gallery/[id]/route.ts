@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
-import { getAdminDb, getAdminStorageBucket } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function DELETE(
   request: NextRequest,
@@ -15,28 +15,34 @@ export async function DELETE(
     }
 
     const { id } = await context.params
-    const db = getAdminDb()
-    const docRef = db.collection("gallery").doc(id)
-    const doc = await docRef.get()
 
-    if (!doc.exists) {
+    const { data: doc, error: fetchError } = await supabaseAdmin
+      .from('gallery')
+      .select('storagepath')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !doc) {
       return Response.json({ error: "Gallery item not found" }, { status: 404 })
     }
 
-    const data = doc.data() as { storagePath?: string } | undefined
-    const storagePath = data?.storagePath
+    const storagePath = doc.storagepath
 
     if (storagePath) {
       try {
-        const bucket = getAdminStorageBucket()
-        await bucket.file(storagePath).delete({ ignoreNotFound: true })
+        await supabaseAdmin.storage.from('gallery').remove([storagePath])
       } catch (storageError) {
-        // Log but do not block deletion of Firestore doc
+        // Log but do not block deletion of db row
         console.error("Failed to delete gallery image from storage:", storageError)
       }
     }
 
-    await docRef.delete()
+    const { error: deleteError } = await supabaseAdmin
+      .from('gallery')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) throw deleteError
 
     return Response.json({ success: true }, { status: 200 })
   } catch (error) {

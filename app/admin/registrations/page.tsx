@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { LogOut, RefreshCw, Trash2, Check, CreditCard, Loader2 } from "lucide-react"
+import { LogOut, RefreshCw, Trash2, Check, CreditCard, Loader2, Eye } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,7 @@ import { Label } from "@/components/ui/label"
 interface GalleryItemSummary {
   id: string
   title: string
-  imageUrl: string
+  imageurl: string
   category: string
 }
 
@@ -39,6 +40,9 @@ interface Registration {
   location: string
   course_selection: string
   previous_knowledge: boolean
+  education_level: string
+  experience_level: string
+  motivation: string
   status: string
   created_at: string
   payment_status?: "none" | "partial" | "full"
@@ -50,7 +54,9 @@ export default function AdminRegistrationsPage() {
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null)
+  const [selectedDetails, setSelectedDetails] = useState<Registration | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<"none" | "partial" | "full">("none")
   const [paymentAmount, setPaymentAmount] = useState<number | undefined>(undefined)
   const [approveLoadingId, setApproveLoadingId] = useState<string | null>(null)
@@ -148,6 +154,11 @@ export default function AdminRegistrationsPage() {
     setPaymentStatus(reg.payment_status || "none")
     setPaymentAmount(reg.payment_amount)
     setPaymentDialogOpen(true)
+  }
+
+  const openDetailsDialog = (reg: Registration) => {
+    setSelectedDetails(reg)
+    setDetailsDialogOpen(true)
   }
 
   const handleConfirmPayment = async () => {
@@ -445,160 +456,114 @@ export default function AdminRegistrationsPage() {
               </div>
             ) : (
               <>
-                {/* Mobile Card View */}
-                <div className="md:hidden space-y-4">
-                  {registrations.map((reg) => (
-                    <Card key={reg.id} className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold text-lg">{reg.full_name}</h3>
-                            <p className="text-sm text-muted-foreground">{reg.email}</p>
+                {/* User Details Dialog */}
+                <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+                  <DialogContent className="max-w-md sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>User Details</DialogTitle>
+                      <DialogDescription>
+                        Full information for {selectedDetails?.full_name}
+                      </DialogDescription>
+                    </DialogHeader>
+                    {selectedDetails && (
+                      <div className="space-y-4 py-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Full Name</Label>
+                            <p className="font-medium">{selectedDetails.full_name}</p>
                           </div>
-                          <Badge variant={reg.status === "pending" ? "outline" : "default"}>
-                            {reg.status}
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <span className="font-medium">Phone:</span> {reg.phone_number}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Status</Label>
+                            <div>
+                              <Badge variant={selectedDetails.status === "pending" ? "outline" : "default"}>
+                                {selectedDetails.status}
+                              </Badge>
+                            </div>
                           </div>
-                          <div>
-                            <span className="font-medium">WhatsApp:</span> {reg.whatsapp_number}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Email</Label>
+                            <p className="text-sm">{selectedDetails.email}</p>
                           </div>
-                          <div className="col-span-2">
-                            <span className="font-medium">Location:</span> {reg.location}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Phone</Label>
+                            <p className="text-sm">{selectedDetails.phone_number}</p>
                           </div>
-                          <div className="col-span-2">
-                            <span className="font-medium">Course:</span> {reg.course_selection}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">WhatsApp</Label>
+                            <p className="text-sm">{selectedDetails.whatsapp_number}</p>
                           </div>
-                          <div>
-                            <span className="font-medium">Knowledge:</span>
-                            <Badge variant={reg.previous_knowledge ? "default" : "secondary"} className="ml-1">
-                              {reg.previous_knowledge ? "Yes" : "No"}
-                            </Badge>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Location</Label>
+                            <p className="text-sm">{selectedDetails.location}</p>
                           </div>
-                          <div>
-                            <span className="font-medium">Registered:</span> {formatDate(reg.created_at)}
+                          <div className="col-span-2 space-y-1">
+                            <Label className="text-xs text-muted-foreground">Course Selection</Label>
+                            <p className="text-sm font-medium">{selectedDetails.course_selection}</p>
                           </div>
-                          <div className="col-span-2 mt-1">
-                            <span className="font-medium mr-2">Payment:</span>
-                            <Badge variant={reg.payment_status === "full" ? "default" : reg.payment_status === "partial" ? "outline" : "secondary"}>
-                              {reg.payment_status ? reg.payment_status : "none"}
-                            </Badge>
-                            {reg.payment_status === "partial" && reg.payment_amount ? (
-                              <span className="ml-2 text-muted-foreground text-xs font-semibold underline underline-offset-4 decoration-primary/30">GHS {reg.payment_amount}</span>
-                            ) : null}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Previous Knowledge</Label>
+                            <p className="text-sm">{selectedDetails.previous_knowledge ? "Yes" : "No"}</p>
                           </div>
-                        </div>
-
-                        <div className="flex gap-2 pt-2">
-                          {(reg.status === "pending" || reg.status === "awaiting_admin_approval") && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(reg)}
-                              className="flex-1"
-                              disabled={approveLoadingId === reg.id}
-                            >
-                              {approveLoadingId === reg.id ? (
-                                <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Approving</span>
-                              ) : (
-                                <>
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Approve
-                                </>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Education Level</Label>
+                            <p className="text-sm">{selectedDetails.education_level || "N/A"}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Experience Level</Label>
+                            <p className="text-sm">{selectedDetails.experience_level || "N/A"}</p>
+                          </div>
+                          <div className="col-span-2 space-y-1">
+                            <Label className="text-xs text-muted-foreground">Motivation / Goals</Label>
+                            <p className="text-sm italic">{selectedDetails.motivation || "No motivation provided"}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Registration Date</Label>
+                            <p className="text-sm">{formatDate(selectedDetails.created_at)}</p>
+                          </div>
+                          <div className="col-span-2 space-y-1 border-t pt-2">
+                            <Label className="text-xs text-muted-foreground">Payment Status</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant={selectedDetails.payment_status === "full" ? "default" : selectedDetails.payment_status === "partial" ? "outline" : "secondary"}>
+                                {selectedDetails.payment_status ? selectedDetails.payment_status : "none"}
+                              </Badge>
+                              {selectedDetails.payment_status === "partial" && selectedDetails.payment_amount && (
+                                <span className="text-sm font-bold">GHS {selectedDetails.payment_amount}</span>
                               )}
-                            </Button>
-                          )}
-                          <Dialog open={paymentDialogOpen && selectedRegistration?.id === reg.id} onOpenChange={setPaymentDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="secondary" className="flex-1" onClick={() => openPaymentDialog(reg)}>
-                                <CreditCard className="w-4 h-4 mr-1" />
-                                Confirm Payment
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Confirm Payment</DialogTitle>
-                                <DialogDescription>
-                                  Set payment status for {reg.full_name}. If partial, enter the amount received.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <Label>Payment Status</Label>
-                                  <div className="flex gap-2">
-                                    <Button type="button" variant={paymentStatus === "full" ? "default" : "outline"} onClick={() => setPaymentStatus("full")}>
-                                      Full
-                                    </Button>
-                                    <Button type="button" variant={paymentStatus === "partial" ? "default" : "outline"} onClick={() => setPaymentStatus("partial")}>
-                                      Partial
-                                    </Button>
-                                    <Button type="button" variant={paymentStatus === "none" ? "default" : "outline"} onClick={() => setPaymentStatus("none")}>
-                                      None
-                                    </Button>
-                                  </div>
-                                </div>
-                                {paymentStatus === "partial" && (
-                                  <div className="space-y-2">
-                                    <Label htmlFor="amount">Amount (GHS)</Label>
-                                    <Input
-                                      id="amount"
-                                      type="number"
-                                      min={1}
-                                      value={paymentAmount ?? ""}
-                                      onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                                      placeholder="Enter amount received"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                              <DialogFooter>
-                                <Button variant="outline" onClick={() => setPaymentDialogOpen(false)} disabled={paymentSaving}>Cancel</Button>
-                                <Button onClick={async () => { setPaymentSaving(true); await handleConfirmPayment(); setPaymentSaving(false) }} disabled={paymentSaving}>
-                                  {paymentSaving ? (<span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving</span>) : "Save"}
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive" className="flex-1" disabled={deleteLoadingId === reg.id}>
-                                {deleteLoadingId === reg.id ? (
-                                  <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Deleting</span>
-                                ) : (
-                                  <>
-                                    <Trash2 className="w-4 h-4 mr-1" />
-                                    Delete
-                                  </>
-                                )}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Registration</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete {reg.full_name}'s registration? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(reg.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-4 border-t mt-4">
+                          <Button
+                            className={cn(
+                              "flex-1",
+                              selectedDetails.status === "approved" ? "bg-slate-500 hover:bg-slate-600" : "bg-green-600 hover:bg-green-700"
+                            )}
+                            onClick={() => {
+                              handleApprove(selectedDetails)
+                              setDetailsDialogOpen(false)
+                            }}
+                            disabled={approveLoadingId === selectedDetails.id}
+                          >
+                            {approveLoadingId === selectedDetails.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                              <Check className="w-4 h-4 mr-2" />
+                            )}
+                            {selectedDetails.status === "approved" ? "Already Approved" : "Approve Student"}
+                          </Button>
+                          <Button variant="outline" className="flex-1" onClick={() => setDetailsDialogOpen(false)}>
+                            Close
+                          </Button>
                         </div>
                       </div>
-                    </Card>
-                  ))}
-                </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <Table>
+                {/* Responsive Table View */}
+                <div className="overflow-x-auto rounded-md border shadow-inner">
+                  <Table className="min-w-[1600px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
@@ -606,6 +571,9 @@ export default function AdminRegistrationsPage() {
                         <TableHead>Phone</TableHead>
                         <TableHead>WhatsApp</TableHead>
                         <TableHead>Location</TableHead>
+                        <TableHead>Education</TableHead>
+                        <TableHead>Experience</TableHead>
+                        <TableHead>Motivation</TableHead>
                         <TableHead>Course</TableHead>
                         <TableHead>Knowledge</TableHead>
                         <TableHead>Status</TableHead>
@@ -622,7 +590,10 @@ export default function AdminRegistrationsPage() {
                           <TableCell>{reg.phone_number}</TableCell>
                           <TableCell>{reg.whatsapp_number}</TableCell>
                           <TableCell>{reg.location}</TableCell>
-                          <TableCell>{reg.course_selection}</TableCell>
+                          <TableCell className="max-w-[150px] truncate" title={reg.education_level}>{reg.education_level || "N/A"}</TableCell>
+                          <TableCell className="max-w-[150px] truncate" title={reg.experience_level}>{reg.experience_level || "N/A"}</TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={reg.motivation}>{reg.motivation || "N/A"}</TableCell>
+                          <TableCell className="max-w-[150px] truncate" title={reg.course_selection}>{reg.course_selection}</TableCell>
                           <TableCell>
                             <Badge variant={reg.previous_knowledge ? "default" : "secondary"}>
                               {reg.previous_knowledge ? "Yes" : "No"}
@@ -644,23 +615,29 @@ export default function AdminRegistrationsPage() {
                           <TableCell>{formatDate(reg.created_at)}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              {(reg.status === "pending" || reg.status === "awaiting_admin_approval") && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleApprove(reg)}
-                                  className="bg-green-600 hover:bg-green-700"
-                                  disabled={approveLoadingId === reg.id}
-                                >
-                                  {approveLoadingId === reg.id ? (
-                                    <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Approving</span>
-                                  ) : (
-                                    <>
-                                      <Check className="w-4 h-4 mr-1" />
-                                      Approve
-                                    </>
-                                  )}
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openDetailsDialog(reg)}
+                                title="View Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(reg)}
+                                className={reg.status === "approved" ? "bg-slate-500 hover:bg-slate-600" : "bg-green-600 hover:bg-green-700"}
+                                disabled={approveLoadingId === reg.id}
+                              >
+                                {approveLoadingId === reg.id ? (
+                                  <span className="inline-flex items-center"><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Processing</span>
+                                ) : (
+                                  <>
+                                    <Check className="w-4 h-4 mr-1" />
+                                    {reg.status === "approved" ? "Approved" : "Approve"}
+                                  </>
+                                )}
+                              </Button>
                               <Dialog open={paymentDialogOpen && selectedRegistration?.id === reg.id} onOpenChange={setPaymentDialogOpen}>
                                 <DialogTrigger asChild>
                                   <Button size="sm" variant="secondary" onClick={() => openPaymentDialog(reg)}>
@@ -847,7 +824,7 @@ export default function AdminRegistrationsPage() {
                       <div className="h-32 w-full overflow-hidden bg-black/40">
                         {/* Use plain img to avoid layout warnings inside admin card */}
                         <img
-                          src={item.imageUrl}
+                          src={item.imageurl}
                           alt={item.title}
                           className="h-full w-full object-cover"
                           loading="lazy"

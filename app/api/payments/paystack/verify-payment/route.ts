@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
 
@@ -29,16 +29,18 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Invalid registration ID" }, { status: 400 })
     }
 
-    const db = getAdminDb()
-    const docRef = db.collection("registrations").doc(registrationId)
+    const { error: updateError } = await supabaseAdmin
+      .from('registrations')
+      .update({
+        payment_status: amount === 70000 ? "full" : "partial",
+        payment_amount: amount / 100, // convert from kobo to GHS
+        payment_reference: reference,
+        payment_method: "paystack",
+        payment_confirmed_at: new Date().toISOString(),
+      })
+      .eq('id', registrationId)
 
-    await docRef.update({
-      payment_status: amount === 70000 ? "full" : "partial",
-      payment_amount: amount / 100, // convert from kobo to GHS
-      payment_reference: reference,
-      payment_method: "paystack",
-      payment_confirmed_at: new Date().toISOString(),
-    })
+    if (updateError) throw updateError
 
     return Response.json({ status: "success" }, { status: 200 })
 

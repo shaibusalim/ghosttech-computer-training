@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
-import { getAdminDb, getAdminStorageBucket } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
@@ -11,13 +11,12 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const db = getAdminDb()
-    const snapshot = await db.collection("gallery").orderBy("createdAt", "desc").get()
+    const { data: items, error } = await supabaseAdmin
+      .from('gallery')
+      .select('*')
+      .order('createdat', { ascending: false })
 
-    const items = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Record<string, unknown>),
-    }))
+    if (error) throw error
 
     return Response.json({ items }, { status: 200 })
   } catch (error) {
@@ -47,12 +46,13 @@ export async function POST(request: NextRequest) {
     }
 
     // imageData is expected as data:<mime>;base64,<payload>
-    const match = imageData.match(/^data:(?<mime>.+);base64,(?<data>.+)$/)
-    if (!match || !match.groups) {
+    const match = imageData.match(/^data:(.+);base64,(.+)$/)
+    if (!match) {
       return Response.json({ error: "Invalid image data" }, { status: 400 })
     }
 
-    const { mime, data } = match.groups as { mime: string; data: string }
+    const mime = match[1]
+    const data = match[2]
     const buffer = Buffer.from(data, "base64")
 
     // Basic size guard (10MB)
@@ -60,38 +60,48 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "File too large" }, { status: 400 })
     }
 
-    const bucket = getAdminStorageBucket()
-    
-    if (!bucket.name) {
-      console.error("[v0] Storage bucket is not configured or not found.")
-      return Response.json({ error: "Storage bucket not configured. Please check your .env file." }, { status: 500 })
-    }
-
     const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
     const timestamp = Date.now()
     const extension = mime.split("/")[1] || "jpg"
-    const storagePath = `gallery/${safeTitle}-${timestamp}.${extension}`
+    const storagePathRaw = `gallery/${safeTitle}-${timestamp}.${extension}`
 
-    const file = bucket.file(storagePath)
-    await file.save(buffer, {
-      contentType: mime,
-      public: true,
-      metadata: {
-        cacheControl: "public, max-age=31536000",
-      },
-    })
+    // Upload to Supabase Storage
+    const { data: storageData, error: storageError } = await supabaseAdmin
+      .storage
+      .from('gallery')
+      .upload(storagePathRaw, buffer, {
+        contentType: mime,
+        cacheControl: "31536000",
+        upsert: false
+      })
 
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${encodeURI(storagePath)}`
+    if (storageError || !storageData) {
+      console.error("[v0] Storage upload error:", storageError)
+      return Response.json({ error: "Failed to upload image" }, { status: 500 })
+    }
 
-    const db = getAdminDb()
-    const docRef = await db.collection("gallery").add({
-      title,
-      description: description ?? "",
-      category,
-      imageUrl: publicUrl,
-      storagePath,
-      createdAt: new Date().toISOString(),
-    })
+    const { data: publicUrlData } = supabaseAdmin
+      .storage
+      .from('gallery')
+      .getPublicUrl(storageData.path)
+
+    const publicUrl = publicUrlData.publicUrl
+
+    const { data: dbData, error: dbError } = await supabaseAdmin
+      .from('gallery')
+      .insert([{
+        title,
+        description: description ?? "",
+        category,
+        imageurl: publicUrl,
+        storagepath: storageData.path,
+        createdat: new Date().toISOString(),
+      }])
+      .select()
+
+    if (dbError) throw dbError
+
+    const docRef = dbData[0]
 
     return Response.json(
       {
@@ -100,7 +110,7 @@ export async function POST(request: NextRequest) {
         description: description ?? "",
         category,
         imageUrl: publicUrl,
-        storagePath,
+        storagePath: storageData.path,
       },
       { status: 201 },
     )

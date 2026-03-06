@@ -1,6 +1,5 @@
 import { cookies } from "next/headers"
-import { getAdminDb } from "@/lib/firebase/admin"
-import admin from "firebase-admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
@@ -16,15 +15,13 @@ export async function GET() {
       return Response.json({ error: "Invalid auth cookie" }, { status: 401 })
     }
 
-    const db = getAdminDb()
-
     // Fetch all registrations ordered by creation date (newest first)
-    const snapshot = await db.collection("registrations").orderBy("created_at", "desc").get()
+    const { data: registrations, error: fetchError } = await supabaseAdmin
+      .from('registrations')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-    const registrations = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
+    if (fetchError) throw fetchError
 
     return Response.json({ registrations }, { status: 200 })
   } catch (error) {

@@ -8,6 +8,11 @@ CREATE TABLE IF NOT EXISTS registrations (
   location VARCHAR(255) NOT NULL,
   course_selection VARCHAR(100) NOT NULL,
   previous_knowledge BOOLEAN NOT NULL,
+  education_level VARCHAR(255),
+  experience_level VARCHAR(255),
+  motivation TEXT,
+  payment_status VARCHAR(50) DEFAULT 'none',
+  payment_amount DECIMAL(10, 2),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   status VARCHAR(50) DEFAULT 'pending'
 );

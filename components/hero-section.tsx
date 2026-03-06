@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, Code2, Database, Zap, Terminal } from "lucide-react"
 import { useEffect, useState } from "react"
-import { collection, getDocs, query, where } from "firebase/firestore"
-import { getClientDb } from "@/lib/firebase/client"
+import { supabase } from "@/lib/supabase/client"
 import { MAX_SEATS_PER_COHORT } from "@/lib/utils"
 import batches from "@/data/batches.json"
 // carousel removed — hero now uses background images
@@ -181,11 +180,14 @@ export function HeroSection() {
   useEffect(() => {
     async function fetchSeats() {
       try {
-        const db = getClientDb()
-        const registrationsRef = collection(db, "registrations")
-        const approvedQuery = query(registrationsRef, where("status", "==", "approved"))
-        const snapshot = await getDocs(approvedQuery)
-        const confirmedCount = snapshot.size
+        const { count, error } = await supabase
+          .from("registrations")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved")
+
+        if (error) throw error
+
+        const confirmedCount = count ?? 0
         const remaining = Math.max(0, MAX_SEATS_PER_COHORT - confirmedCount)
         setSeatsRemaining(remaining)
         setSeatsError(null)
@@ -206,7 +208,7 @@ export function HeroSection() {
       aria-label="Hero section"
       style={{ minHeight: "calc(var(--vh, 1vh) * 85)" }}
     >
-      <div 
+      <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-20"
         style={{ backgroundImage: 'url("/hero/photo_2026-03-04_01-30-34.jpg")' }}
       />
@@ -224,41 +226,41 @@ export function HeroSection() {
       <div className="relative z-20 max-w-6xl w-full grid grid-cols-1 gap-8 md:gap-12 items-center pb-12 md:pb-0">
         {/* Left content */}
         <div className="space-y-6 md:space-y-8">
-            {/* Top badge row */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
-                <p className="text-[10px] sm:text-xs font-semibold text-primary">Professional IT Training Center</p>
+          {/* Top badge row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
+              <p className="text-[10px] sm:text-xs font-semibold text-primary">Professional IT Training Center</p>
+            </div>
+            {Array.isArray(batches) && batches.length > 0 && batches[0] && (
+              <div className="inline-block px-3 py-1 bg-accent/10 border border-accent/30 rounded-full">
+                <p className="text-[10px] sm:text-xs font-semibold text-accent">{batches[0].title} • {batches[0].dates}</p>
               </div>
-              {Array.isArray(batches) && batches.length > 0 && batches[0] && (
-                <div className="inline-block px-3 py-1 bg-accent/10 border border-accent/30 rounded-full">
-                  <p className="text-[10px] sm:text-xs font-semibold text-accent">{batches[0].title} • {batches[0].dates}</p>
-                </div>
-              )}
-            </div>
+            )}
+          </div>
 
-            {/* Main heading (clear value prop) */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-balance leading-tight">
-              Gh0sTTech Practical IT &amp; System Engineering Program
-            </h1>
+          {/* Main heading (clear value prop) */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-balance leading-tight">
+            Gh0sTTech Practical IT &amp; System Engineering Program
+          </h1>
 
-            {/* Supporting subheading */}
-            <p className="text-base md:text-lg text-foreground/70 leading-relaxed max-w-lg">
-              Hands-on training in Windows installation, system repair, virus removal, and real-world troubleshooting.
-            </p>
+          {/* Supporting subheading */}
+          <p className="text-base md:text-lg text-foreground/70 leading-relaxed max-w-lg">
+            Hands-on training in Windows installation, system repair, virus removal, and real-world troubleshooting.
+          </p>
 
-            {/* CTA buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href="/register" className="w-full sm:w-auto">
-                <Button className="w-full bg-linear-to-r from-accent to-primary text-primary-foreground font-bold py-5 text-lg shadow-lg">
-                  Secure Your Seat <ArrowRight className="ml-2" size={18} />
-                </Button>
-              </Link>
-              <Link href="#curriculum" className="w-full sm:w-auto">
-                <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10 font-semibold py-5 text-lg">
-                  View Curriculum
-                </Button>
-              </Link>
-            </div>
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <Link href="/register" className="w-full sm:w-auto">
+              <Button className="w-full bg-linear-to-r from-accent to-primary text-primary-foreground font-bold py-5 text-lg shadow-lg">
+                Secure Your Seat <ArrowRight className="ml-2" size={18} />
+              </Button>
+            </Link>
+            <Link href="#curriculum" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10 font-semibold py-5 text-lg">
+                View Curriculum
+              </Button>
+            </Link>
+          </div>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 md:pt-8 border-t border-primary/10">

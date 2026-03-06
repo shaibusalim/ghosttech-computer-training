@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
 
@@ -11,17 +11,14 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Missing registrationId or amount" }, { status: 400 })
     }
 
-    const db = getAdminDb()
-    const docRef = db.collection("registrations").doc(registrationId)
-    const doc = await docRef.get()
+    const { data: registrationData, error: fetchError } = await supabaseAdmin
+      .from('registrations')
+      .select('email, full_name')
+      .eq('id', registrationId)
+      .single()
 
-    if (!doc.exists) {
+    if (fetchError || !registrationData) {
       return Response.json({ error: "Registration not found" }, { status: 404 })
-    }
-
-    const registrationData = doc.data()
-    if (!registrationData) {
-        return Response.json({ error: "Registration data not found" }, { status: 404 })
     }
 
     const { email, full_name } = registrationData

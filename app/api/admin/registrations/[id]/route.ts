@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function DELETE(
   request: NextRequest,
@@ -28,22 +28,17 @@ export async function DELETE(
 
     console.log("Authentication passed, proceeding with delete")
 
-    const db = getAdminDb()
     console.log("Attempting to delete document with ID:", id)
 
-    // Check if document exists first
-    const docRef = db.collection("registrations").doc(id)
-    const doc = await docRef.get()
+    const { error: deleteError } = await supabaseAdmin
+      .from('registrations')
+      .delete()
+      .eq('id', id)
 
-    if (!doc.exists) {
-      console.log("Document does not exist with ID:", id)
-      return Response.json({ error: "Registration not found" }, { status: 404 })
+    if (deleteError) {
+      console.error("Supabase delete failed:", deleteError)
+      return Response.json({ error: "Failed to delete registration" }, { status: 500 })
     }
-
-    console.log("Document found, proceeding with delete")
-
-    // Delete the registration
-    await docRef.delete()
 
     console.log("Delete successful for ID:", id)
 
