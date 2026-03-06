@@ -244,9 +244,21 @@ export function HeroSection() {
           </h1>
 
           {/* Supporting subheading */}
-          <p className="text-base md:text-lg text-foreground/70 leading-relaxed max-w-lg">
-            Hands-on training in Windows installation, system repair, virus removal, and real-world troubleshooting.
+          <p className="text-base md:text-lg text-foreground/80 leading-relaxed max-w-xl">
+            Gain job‑ready, hands‑on skills to assemble PCs, install Windows &amp; Office, and troubleshoot real faults.
           </p>
+
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              Tamale • Gurugu
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              Total fee GHS 700
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              Deposit GHS 300 to reserve
+            </span>
+          </div>
 
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-4">

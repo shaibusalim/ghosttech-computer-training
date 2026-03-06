@@ -140,7 +140,7 @@ export default function TrainingGalleryPage() {
         {/* Masonry-like grid */}
         <div className="mt-4 columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
           <AnimatePresence>
-            {filteredItems.map((item) => (
+            {filteredItems.map((item, idx) => (
               <motion.button
                 key={item.id}
                 type="button"
@@ -161,7 +161,7 @@ export default function TrainingGalleryPage() {
                         width={800}
                         height={600}
                         className="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                        loading="lazy"
+                        loading={idx < 3 ? "eager" : "lazy"}
                       />
                     </div>
                   </div>

@@ -40,12 +40,13 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="#home" className="flex items-center gap-2 group">
-          <div className="w-26 h-16 relative">
+          <div className="w-[104px] h-[64px] relative shrink-0">
             <Image
               src="/logo.png"
               alt="Gh0sT Tech Logo"
               width={104}
               height={64}
+              loading="eager"
               priority
               className="object-contain"
             />

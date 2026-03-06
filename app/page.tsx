@@ -7,6 +7,11 @@ import { AboutInstructor } from "@/components/about-instructor"
 import { CoursesSection } from "@/components/courses-section"
 import { FeaturesSection } from "@/components/features-section"
 import { CurriculumSection } from "@/components/curriculum-section"
+import { WhoThisTraining } from "@/components/who-this-training"
+import { NeedsProvideSection } from "@/components/needs-provide"
+import { FaqSection } from "@/components/faq-section"
+import { LocationSection } from "@/components/location-section"
+import { PaymentInfo } from "@/components/payment-info"
 import Gallery from "@/components/gallery"
 import { ContactSection } from "@/components/contact-section"
 import { FloatingWhatsApp } from "@/components/floating-whatsapp"
@@ -56,6 +61,30 @@ export default function Home() {
         viewport={{ once: true, margin: "-10%" }}
       >
         <HeroSection />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <WhoThisTraining />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <NeedsProvideSection />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <PaymentInfo />
       </motion.section>
       <motion.section
         id="about"
@@ -114,6 +143,22 @@ export default function Home() {
             <a href="/training-gallery" className="text-sm text-primary font-semibold">View full gallery →</a>
           </div>
         </div>
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <FaqSection />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <LocationSection />
       </motion.section>
       {/* Registration moved to a dedicated page at /register */}
       <motion.section
