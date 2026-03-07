@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { AboutInstructor } from "@/components/about-instructor"
-import { CoursesSection } from "@/components/courses-section"
 import { FeaturesSection } from "@/components/features-section"
 import { CurriculumSection } from "@/components/curriculum-section"
 import { WhoThisTraining } from "@/components/who-this-training"
+import { ProgramOutcomes } from "@/components/program-outcomes"
 import { NeedsProvideSection } from "@/components/needs-provide"
 import { FaqSection } from "@/components/faq-section"
 import { LocationSection } from "@/components/location-section"
@@ -71,38 +71,12 @@ export default function Home() {
         <WhoThisTraining />
       </motion.section>
       <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-      >
-        <NeedsProvideSection />
-      </motion.section>
-      <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-      >
-        <PaymentInfo />
-      </motion.section>
-      <motion.section
-        id="about"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
-        <AboutInstructor />
-      </motion.section>
-      <motion.section
-        id="courses"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-      >
-        <CoursesSection />
+        <ProgramOutcomes />
       </motion.section>
       <motion.section
         id="features"
@@ -120,6 +94,15 @@ export default function Home() {
         viewport={{ once: true }}
       >
         <CurriculumSection />
+      </motion.section>
+      <motion.section
+        id="about"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <AboutInstructor />
       </motion.section>
       <motion.section
         id="gallery"
@@ -143,6 +126,22 @@ export default function Home() {
             <a href="/training-gallery" className="text-sm text-primary font-semibold">View full gallery →</a>
           </div>
         </div>
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <NeedsProvideSection />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <PaymentInfo />
       </motion.section>
       <motion.section
         initial={{ opacity: 0, y: 40 }}
