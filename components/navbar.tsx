@@ -20,8 +20,9 @@ export function Navbar() {
 
   const navItems = [
     { label: "Home", href: "/#home" },
+    { label: "Outcomes", href: "/#outcomes" },
+    { label: "Curriculum", href: "/#curriculum" },
     { label: "About", href: "/#about" },
-    { label: "Courses", href: "/#courses" },
     { label: "Gallery", href: "/training-gallery" },
     { label: "Contact", href: "/#contact" },
   ]
@@ -39,7 +40,7 @@ export function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="#home" className="flex items-center gap-2 group">
+        <Link href="/#home" className="flex items-center gap-2 group">
           <div className="w-[104px] h-[64px] relative shrink-0">
             <Image
               src="/logo.png"

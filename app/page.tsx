@@ -71,6 +71,7 @@ export default function Home() {
         <WhoThisTraining />
       </motion.section>
       <motion.section
+        id="outcomes"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -88,6 +89,7 @@ export default function Home() {
         <FeaturesSection />
       </motion.section>
       <motion.section
+        id="curriculum"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
