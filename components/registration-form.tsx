@@ -78,9 +78,9 @@ export function RegistrationForm() {
     if (currentStep === 1) {
       if (!formData.full_name) newErrors.full_name = "Full name is required"
       if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Enter a valid email"
-      if (!formData.phone_number || !/^\d{8,15}$/.test(formData.phone_number))
-        newErrors.phone_number = "Enter a valid phone number"
-      if (!formData.whatsapp_number || !/^\d{8,15}$/.test(formData.whatsapp_number))
+      if (!formData.phone_number || !/^\d{10}$/.test(formData.phone_number))
+        newErrors.phone_number = "Enter a valid 10-digit phone number"
+      if (!formData.whatsapp_number || !/^\d{10}$/.test(formData.whatsapp_number))
         newErrors.whatsapp_number = "Enter a valid WhatsApp number"
       if (!formData.location) newErrors.location = "Location is required"
     }
@@ -123,6 +123,8 @@ export function RegistrationForm() {
     setErrors({})
     setStep((prev) => (prev === 1 ? prev : ((prev - 1) as 1 | 2 | 3)))
   }
+
+  const [isSuccess, setIsSuccess] = useState(false)
 
   const handleFormSubmit = async () => {
     if (step < 3) {
@@ -185,8 +187,24 @@ export function RegistrationForm() {
         console.error("[v0] Email error (registration still completed):", emailError)
       }
 
-      toast({ title: "Registration captured", description: "Continue to payment to secure your seat." })
-      router.push(`/register/payment?registrationId=${encodeURIComponent(docId)}`)
+      setIsSuccess(true)
+
+      setTimeout(() => {
+        setIsSuccess(false)
+        setStep(1)
+        setFormData({
+          full_name: "",
+          phone_number: "",
+          whatsapp_number: "",
+          email: "",
+          location: "",
+          previous_knowledge: "",
+          education_level: "",
+          experience_level: "",
+          motivation: "",
+          termsAccepted: false,
+        })
+      }, 15000)
     } catch (error) {
       console.error("[v0] Unexpected error:", error)
       toast({
@@ -197,6 +215,20 @@ export function RegistrationForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isSuccess) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center justify-center text-center p-8 bg-background rounded-lg shadow-lg"
+      >
+        <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Registration Successful!</h2>
+        <p className="text-muted-foreground">Thank you for registering. You will receive an email confirmation shortly.</p>
+      </motion.div>
+    )
   }
 
   return (
@@ -314,19 +346,27 @@ export function RegistrationForm() {
               <div className="space-y-6">
                 <div className="space-y-3">
                   <Label>Previous Computer Knowledge</Label>
-                  <RadioGroup value={formData.previous_knowledge} onValueChange={handleRadioChange}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="knowledge-yes" />
-                      <Label htmlFor="knowledge-yes" className="cursor-pointer font-normal">
-                        Yes, I have computer experience
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="knowledge-no" />
-                      <Label htmlFor="knowledge-no" className="cursor-pointer font-normal">
-                        No, I&apos;m a complete beginner
-                      </Label>
-                    </div>
+                  <RadioGroup value={formData.previous_knowledge} onValueChange={handleRadioChange} className="grid grid-cols-2 gap-4">
+                    <Label
+                      htmlFor="knowledge-yes"
+                      className={`flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground ${
+                        formData.previous_knowledge === "yes" ? "border-primary" : ""
+                      }`}
+                    >
+                      <RadioGroupItem value="yes" id="knowledge-yes" className="sr-only" />
+                      <span className="text-lg font-semibold">Yes</span>
+                      <span className="text-sm text-muted-foreground">I have computer experience</span>
+                    </Label>
+                    <Label
+                      htmlFor="knowledge-no"
+                      className={`flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground ${
+                        formData.previous_knowledge === "no" ? "border-primary" : ""
+                      }`}
+                    >
+                      <RadioGroupItem value="no" id="knowledge-no" className="sr-only" />
+                      <span className="text-lg font-semibold">No</span>
+                      <span className="text-sm text-muted-foreground">I'm a complete beginner</span>
+                    </Label>
                   </RadioGroup>
                   {errors.previous_knowledge && (
                     <p className="text-xs text-destructive mt-1">{errors.previous_knowledge}</p>
