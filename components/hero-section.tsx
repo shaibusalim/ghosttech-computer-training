@@ -4,7 +4,7 @@ import type React from "react"
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowRight, Code2, Database, Zap, Terminal } from "lucide-react"
+import { ArrowRight, Code2, Database, Zap, Terminal, CalendarDays } from "lucide-react"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { MAX_SEATS_PER_COHORT } from "@/lib/utils"
@@ -223,7 +223,47 @@ export function HeroSection() {
       {/* Tech stack floating icons */}
       <TechStackIcons />
 
-      <div className="relative z-20 max-w-6xl w-full grid grid-cols-1 gap-8 md:gap-12 items-center pb-12 md:pb-0">
+      {/* Hanging Alert Banner */}
+      <div 
+        className="absolute top-4 md:top-0 left-0 right-0 z-50 w-[95%] sm:max-w-lg mx-auto flex flex-col items-center origin-top pointer-events-auto transition-transform hover:scale-[1.02] duration-300"
+        style={{ animation: "swing-in-out 15s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite" }}
+      >
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes swing-in-out {
+            0%, 5% { transform: translateY(-100%) rotateX(-90deg); opacity: 0; }
+            10%, 90% { transform: translateY(0) rotateX(0deg); opacity: 1; }
+            95%, 100% { transform: translateY(-100%) rotateX(-90deg); opacity: 0; }
+          }
+        `}} />
+        
+        {/* 'Strings' for the hanging effect */}
+        <div className="flex justify-between w-[80%] sm:w-3/4 px-4 sm:px-8">
+          <div className="w-[2px] h-6 sm:h-12 bg-linear-to-b from-primary/10 via-primary/50 to-primary shadow-sm shadow-primary/50" />
+          <div className="w-[2px] h-6 sm:h-12 bg-linear-to-b from-primary/10 via-primary/50 to-primary shadow-sm shadow-primary/50" />
+        </div>
+        
+        {/* The Card */}
+        <div className="w-full bg-slate-950/90 backdrop-blur-xl border border-primary/40 rounded-2xl p-2.5 sm:p-4 shadow-2xl shadow-primary/20 flex flex-row items-center gap-2 sm:gap-4 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-linear-to-r from-primary/0 via-primary/10 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+          
+          <div className="bg-linear-to-br from-primary/20 to-accent/20 p-2 sm:p-3 rounded-xl shrink-0 border border-primary/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+            <CalendarDays className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
+          </div>
+          
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <h3 className="font-bold text-[13px] sm:text-base text-foreground leading-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/70 whitespace-normal break-words">April Batch Enrollment!</h3>
+            <p className="text-[10px] sm:text-sm text-foreground/70 leading-tight mt-0.5 whitespace-normal break-words">Secure your spot for the practical training.</p>
+          </div>
+          
+          <Link href="/register" className="shrink-0 z-10">
+            <Button size="sm" className="bg-white hover:bg-white/90 text-black border-none text-[10px] sm:text-xs font-bold shadow-lg shadow-white/20 transition-all hover:scale-105 h-8 sm:h-9 px-3 sm:px-4 rounded-full flex items-center">
+              Register <ArrowRight className="ml-1 sm:ml-2 w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <div className="relative z-20 max-w-6xl w-full grid grid-cols-1 gap-8 md:gap-12 items-center pb-12 md:pb-0 mt-20 md:mt-0">
         {/* Left content */}
         <div className="space-y-6 md:space-y-8">
           {/* Top badge row */}
