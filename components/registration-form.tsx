@@ -177,6 +177,9 @@ export function RegistrationForm() {
             email: formData.email,
             full_name: formData.full_name,
             course_selection: "All Courses",
+            phone_number: formData.phone_number,
+            whatsapp_number: formData.whatsapp_number,
+            location: formData.location,
           }),
         })
 

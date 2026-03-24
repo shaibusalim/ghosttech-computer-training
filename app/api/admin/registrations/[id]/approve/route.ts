@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
+import { sendEmail, emailTemplates } from "@/lib/email-utils"
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +21,7 @@ export async function POST(
     }
 
     const { id } = await context.params
-    const { email, full_name, course_selection } = await request.json()
+    const { email, full_name } = await request.json()
 
     // Update the registration status to approved
     const { error: updateError } = await supabaseAdmin
@@ -32,20 +33,12 @@ export async function POST(
 
     // Send approval email
     try {
-      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-admin-notification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          full_name,
-          course_selection,
-          type: "approval"
-        }),
+      const html = emailTemplates.approval(full_name)
+      await sendEmail({
+        to: email,
+        subject: "🎉 Welcome to Gh0sT Tech - Registration Approved!",
+        html,
       })
-
-      if (!emailResponse.ok) {
-        console.error("[v0] Approval email send failed, but registration was approved")
-      }
     } catch (emailError) {
       console.error("[v0] Approval email error (registration still approved):", emailError)
     }

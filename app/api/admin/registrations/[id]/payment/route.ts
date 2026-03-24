@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
+import { sendEmail, emailTemplates } from "@/lib/email-utils"
 
 type PaymentStatus = "none" | "partial" | "full"
 
@@ -65,21 +66,14 @@ export async function POST(
     if (updateError) throw updateError
 
     try {
-      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-admin-notification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "payment",
-          email,
-          full_name,
-          payment_status,
-          payment_amount: payment_status === "partial" ? payment_amount : undefined,
-        }),
+      const amountText = payment_status === "partial" ? `Part payment received: GHS ${payment_amount}` : payment_status === "full" ? "Full payment received: GHS 700" : "No payment recorded"
+      const html = emailTemplates.payment(full_name, payment_status, amountText)
+      
+      await sendEmail({
+        to: email,
+        subject: payment_status === "full" ? "✅ Payment Confirmed - Full Payment Received" : payment_status === "partial" ? "🟡 Payment Confirmed - Part Payment Received" : "ℹ️ Payment Status Update",
+        html,
       })
-
-      if (!emailResponse.ok) {
-        console.error("[v0] Payment email send failed, but payment status updated")
-      }
     } catch (emailError) {
       console.error("[v0] Payment email error (status updated):", emailError)
     }
