@@ -7,79 +7,79 @@ import {
   Monitor, 
   Wrench, 
   ShieldCheck, 
-  Settings, 
+  FileSpreadsheet, 
   Database, 
   Wifi, 
-  Globe, 
-  Laptop, 
-  Lightbulb,
+  Code2, 
+  Bot, 
+  Sparkles,
   CheckCircle2
 } from "lucide-react"
 
 const TOPICS = [
   {
-    title: "Computer Hardware Fundamentals",
-    desc: "Master the physical components that make a computer run.",
+    title: "Computer Hardware & Diagnostics",
+    desc: "Master physical components, RAM, CPUs, PSUs, disassembly & rebuilding.",
     icon: Cpu,
   },
   {
-    title: "Operating System Installation",
-    desc: "Learn to install and configure Windows and Linux distributions.",
+    title: "OS Installation & Driver Config",
+    desc: "Deploy Windows 10/11 OS, driver packages & BIOS/UEFI settings.",
     icon: Monitor,
   },
   {
-    title: "Software Troubleshooting",
-    desc: "Diagnose and resolve common application and system errors.",
-    icon: Wrench,
-  },
-  {
-    title: "Virus Removal & System Security",
-    desc: "Keep systems safe from malware and security threats.",
+    title: "Malware Removal & Virus Cleaning",
+    desc: "Purge deep malware infections, optimize registry & secure systems.",
     icon: ShieldCheck,
   },
   {
-    title: "Computer Maintenance",
-    desc: "Optimize system performance with regular maintenance routines.",
-    icon: Settings,
+    title: "Office Productivity & MS Excel",
+    desc: "Create professional documents, automated Excel formulas & pitch decks.",
+    icon: FileSpreadsheet,
   },
   {
-    title: "Data Backup & Recovery",
-    desc: "Protect and recover critical information from failing systems.",
+    title: "Frontend Web Foundations",
+    desc: "Build responsive websites with HTML5, CSS3, Flexbox, Grid & ES6+ JavaScript.",
+    icon: Code2,
+  },
+  {
+    title: "Modern React & Next.js Frameworks",
+    desc: "Architect interactive web apps with React 19, Next.js 15 App Router & Server Components.",
+    icon: Sparkles,
+  },
+  {
+    title: "Backend API & Database Engineering",
+    desc: "Design MySQL relational databases and REST APIs in Node.js/Express or PHP.",
     icon: Database,
   },
   {
-    title: "Basic Networking Concepts",
-    desc: "Understand how devices communicate within a network.",
+    title: "Integrated AI Coding & Tooling",
+    desc: "Leverage ChatGPT, V0.dev & Copilot for rapid development & debugging.",
+    icon: Bot,
+  },
+  {
+    title: "LAN Networking & Router Setup",
+    desc: "Crimp RJ45 Ethernet cables, configure Wi-Fi routers & IP addressing.",
     icon: Wifi,
   },
   {
-    title: "Router & Internet Setup",
-    desc: "Configure local networks and high-speed internet access.",
-    icon: Globe,
-  },
-  {
-    title: "Repair Basics",
-    desc: "Hands-on techniques for laptop and desktop hardware repair.",
-    icon: Laptop,
-  },
-  {
-    title: "Real-world IT Problem Solving",
-    desc: "Apply your skills to solve complex, practical IT challenges.",
-    icon: Lightbulb,
+    title: "Real-World IT Problem Solving",
+    desc: "Apply hands-on techniques to repair systems and build client-ready web apps.",
+    icon: Wrench,
   },
 ]
 
 const SKILLS = [
-  "Diagnose computer hardware problems",
-  "Install and configure operating systems",
-  "Fix slow or malfunctioning computers",
-  "Remove viruses and malware",
-  "Perform routine computer maintenance",
-  "Set up home or small office networks",
-  "Configure routers and internet connections",
-  "Install and update software correctly",
-  "Troubleshoot system errors confidently",
-  "Maintain and optimize computer performance",
+  "Assemble PCs and diagnose physical hardware faults",
+  "Perform clean Windows OS installations and driver setups",
+  "Master document formatting in Word & Pivot Tables in Excel",
+  "Build responsive websites with HTML5, CSS3, Tailwind & JavaScript",
+  "Develop web applications using React 19 & Next.js 15",
+  "Architect backend REST APIs in Node.js/Express or PHP with MySQL",
+  "Utilize AI tools (ChatGPT, V0, Copilot) for code generation & debugging",
+  "Crimp network cables and configure LAN routers & Wi-Fi networks",
+  "Deploy web apps to production servers with custom domains & SSL",
+  "Troubleshoot complex IT hardware, software & database issues",
 ]
 
 export function ProgramOutcomes() {
@@ -89,11 +89,13 @@ export function ProgramOutcomes() {
         {/* Subsection 1: What This Program Is About */}
         <div className="space-y-12">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">What This Program Is About</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">What Our Academy Is About</h2>
             <p className="text-foreground/70 text-lg leading-relaxed">
-              This program is designed to give students practical, real-world computer repair and IT troubleshooting skills. 
-              You will learn how computers work, how to diagnose problems, fix hardware and software issues, and set up networks. 
-              The training focuses on hands-on experience so that by the end of the program you can confidently repair and maintain computers.
+              Gh0sT Tech Academy provides 100% practical, career-oriented training across three core tech pillars: 
+              <span className="text-emerald-400 font-semibold"> Computer Systems Engineering</span>, 
+              <span className="text-cyan-400 font-semibold"> Office Productivity</span>, and 
+              <span className="text-purple-400 font-semibold"> Full-Stack Web Development & AI Tools</span>. 
+              Our hands-on approach ensures you build real, job-ready capabilities.
             </p>
           </div>
 
@@ -133,7 +135,7 @@ export function ProgramOutcomes() {
         <div className="space-y-12 pt-10 border-t border-primary/10">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Skills You Will Walk Away With</h2>
-            <p className="text-primary font-medium text-lg">After completing this program, students will be able to:</p>
+            <p className="text-primary font-medium text-lg">After completing your training track, you will be able to:</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 max-w-4xl mx-auto">
@@ -146,10 +148,10 @@ export function ProgramOutcomes() {
                 transition={{ delay: i * 0.05 }}
                 viewport={{ once: true }}
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 </div>
-                <span className="text-foreground/80 font-medium">{skill}</span>
+                <span className="text-foreground/80 font-medium text-sm sm:text-base">{skill}</span>
               </motion.div>
             ))}
           </div>

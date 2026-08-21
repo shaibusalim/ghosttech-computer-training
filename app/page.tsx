@@ -5,6 +5,7 @@ import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { AboutInstructor } from "@/components/about-instructor"
 import { FeaturesSection } from "@/components/features-section"
+import { CoursesSection } from "@/components/courses-section"
 import { CurriculumSection } from "@/components/curriculum-section"
 import { WhoThisTraining } from "@/components/who-this-training"
 import { ProgramOutcomes } from "@/components/program-outcomes"
@@ -63,6 +64,15 @@ export default function Home() {
         <HeroSection />
       </motion.section>
       <motion.section
+        id="courses"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <CoursesSection />
+      </motion.section>
+      <motion.section
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -70,6 +80,7 @@ export default function Home() {
       >
         <WhoThisTraining />
       </motion.section>
+
       <motion.section
         id="outcomes"
         initial={{ opacity: 0, y: 50 }}

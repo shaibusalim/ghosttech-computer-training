@@ -3,39 +3,19 @@ import { sendEmail, emailTemplates } from "@/lib/email-utils"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { email, full_name, course_selection, phone_number, whatsapp_number, location } = body
+    const { email, full_name, course_selection, backend_preference, required_deposit, phone_number, whatsapp_number, location } = body
 
-    // Validate input
     if (!email || !full_name) {
       return Response.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Get course details for the email
-    const courseDetails: Record<string, { name: string; description: string }> = {
-      hardware: {
-        name: "Computer Hardware",
-        description: "Master the fundamentals of computer components and hardware maintenance",
-      },
-      software: {
-        name: "Software & System Management",
-        description: "Learn essential software skills for daily computing",
-      },
-      networking: {
-        name: "Networking Basics",
-        description: "Understand network fundamentals and connectivity",
-      },
-    }
-
-    const course = courseDetails[course_selection] || { 
-      name: course_selection || "All Courses", 
-      description: "Practical Computer Training Program" 
-    }
+    const courseTitle = course_selection || "Tech Training Program"
 
     // 1. Send confirmation to student
-    const studentEmailHTML = emailTemplates.registration(full_name, course.name, course.description)
+    const studentEmailHTML = emailTemplates.registration(full_name, courseTitle, required_deposit, backend_preference)
     await sendEmail({
       to: email,
-      subject: "Welcome to Gh0sT Tech! - Registration Confirmed",
+      subject: `Welcome to Gh0sT Tech! - ${courseTitle} Registration`,
       html: studentEmailHTML,
     })
 
@@ -45,13 +25,15 @@ export async function POST(request: Request) {
       const adminEmailHTML = emailTemplates.adminAlert({
         full_name,
         email,
+        course_selection: courseTitle,
+        backend_preference,
         phone_number: phone_number || "Not provided",
         whatsapp_number: whatsapp_number || "Not provided",
         location: location || "Not provided",
       })
       await sendEmail({
         to: adminEmail,
-        subject: `🚨 New Student Registration: ${full_name}`,
+        subject: `🚨 New Student Registration: ${full_name} (${courseTitle})`,
         html: adminEmailHTML,
       })
     }
@@ -64,7 +46,7 @@ export async function POST(request: Request) {
       { status: 200 },
     )
   } catch (error) {
-    console.error("[v0] Email API error:", error)
+    console.error("Send confirmation email API error:", error)
     return Response.json({ error: "Failed to send email" }, { status: 500 })
   }
 }

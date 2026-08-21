@@ -39,6 +39,10 @@ interface Registration {
   email: string
   location: string
   course_selection: string
+  course_id?: string
+  backend_preference?: string
+  total_fee?: number
+  required_deposit?: number
   previous_knowledge: boolean
   education_level: string
   experience_level: string
@@ -69,7 +73,7 @@ export default function AdminRegistrationsPage() {
   const [uploadTitle, setUploadTitle] = useState("")
   const [uploadDescription, setUploadDescription] = useState("")
   const [uploadCategory, setUploadCategory] = useState<"installation" | "virus-removal" | "hardware" | "classroom">("installation")
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [courseFilter, setCourseFilter] = useState<string>("all")
   const { toast } = useToast()
   const router = useRouter()
 
@@ -431,17 +435,29 @@ export default function AdminRegistrationsPage() {
         {/* Registrations table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>Registrations</CardTitle>
                 <CardDescription>
                   View and manage course registrations
                 </CardDescription>
               </div>
-              <Button onClick={fetchRegistrations} disabled={loading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <select
+                  value={courseFilter}
+                  onChange={(e) => setCourseFilter(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm font-medium"
+                >
+                  <option value="all">All Courses</option>
+                  <option value="hardware">Hardware Engineering</option>
+                  <option value="productivity">Office Productivity</option>
+                  <option value="web-dev">Web Dev & AI</option>
+                </select>
+                <Button onClick={fetchRegistrations} disabled={loading} size="sm">
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -499,6 +515,11 @@ export default function AdminRegistrationsPage() {
                           <div className="col-span-2 space-y-1">
                             <Label className="text-xs text-muted-foreground">Course Selection</Label>
                             <p className="text-sm font-medium">{selectedDetails.course_selection}</p>
+                            {selectedDetails.backend_preference && (
+                              <p className="text-xs text-purple-400 font-semibold mt-0.5">
+                                Backend Track: {selectedDetails.backend_preference}
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">Previous Knowledge</Label>
@@ -583,7 +604,15 @@ export default function AdminRegistrationsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {registrations.map((reg) => (
+                      {registrations
+                        .filter((reg) => {
+                          if (courseFilter === "all") return true
+                          if (courseFilter === "hardware") return reg.course_id === "hardware-engineering" || reg.course_selection?.toLowerCase().includes("hardware")
+                          if (courseFilter === "productivity") return reg.course_id === "office-productivity" || reg.course_selection?.toLowerCase().includes("office")
+                          if (courseFilter === "web-dev") return reg.course_id === "web-dev-ai" || reg.course_selection?.toLowerCase().includes("web")
+                          return true
+                        })
+                        .map((reg) => (
                         <TableRow key={reg.id}>
                           <TableCell className="font-medium">{reg.full_name}</TableCell>
                           <TableCell>{reg.email}</TableCell>

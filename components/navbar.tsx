@@ -20,8 +20,9 @@ export function Navbar() {
 
   const navItems = [
     { label: "Home", href: "/#home" },
-    { label: "Outcomes", href: "/#outcomes" },
+    { label: "Courses", href: "/#courses" },
     { label: "Curriculum", href: "/#curriculum" },
+    { label: "Outcomes", href: "/#outcomes" },
     { label: "About", href: "/#about" },
     { label: "Gallery", href: "/training-gallery" },
     { label: "Contact", href: "/#contact" },

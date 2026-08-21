@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, Code2, Database, Zap, Terminal, CalendarDays } from "lucide-react"
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase/client"
-import { MAX_SEATS_PER_COHORT } from "@/lib/utils"
 import batches from "@/data/batches.json"
 // carousel removed — hero now uses background images
 
@@ -159,7 +157,13 @@ function SocialProofAvatars() {
 }
 
 export function HeroSection() {
-  const typingWords = ["PC Hardware Assembly", "System Diagnostics", "Network Configuration", "Software Installation"]
+  const typingWords = [
+    "Full-Stack Web Dev & AI Tools",
+    "Practical Computer Engineering",
+    "Office Productivity & MS Excel",
+    "React 19 & Next.js 15 Frameworks",
+    "PHP & Node.js Backend REST APIs",
+  ]
 
   const [seatsRemaining, setSeatsRemaining] = useState<number | null>(null)
   const [seatsLoading, setSeatsLoading] = useState(true)
@@ -176,23 +180,23 @@ export function HeroSection() {
     return () => window.removeEventListener("resize", setVh)
   }, [])
 
-  // Fetch confirmed registrations to calculate remaining seats
+  // Fetch confirmed registrations to calculate remaining seats via API
   useEffect(() => {
     async function fetchSeats() {
       try {
-        const { count, error } = await supabase
-          .from("registrations")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "approved")
-
-        if (error) throw error
-
-        const confirmedCount = count ?? 0
-        const remaining = Math.max(0, MAX_SEATS_PER_COHORT - confirmedCount)
-        setSeatsRemaining(remaining)
-        setSeatsError(null)
-      } catch (error) {
-        console.error("Failed to load seat count", error)
+        const res = await fetch("/api/seats")
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`)
+        }
+        const data = await res.json()
+        if (typeof data.remaining === "number") {
+          setSeatsRemaining(data.remaining)
+          setSeatsError(null)
+        } else {
+          throw new Error(data.error || "Invalid seats response")
+        }
+      } catch (error: any) {
+        console.error("Failed to load seat count:", error?.message || error)
         setSeatsError("Limited seats available")
       } finally {
         setSeatsLoading(false)
@@ -251,8 +255,8 @@ export function HeroSection() {
           </div>
           
           <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <h3 className="font-bold text-[13px] sm:text-base text-foreground leading-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/70 whitespace-normal break-words">April Batch Enrollment!</h3>
-            <p className="text-[10px] sm:text-sm text-foreground/70 leading-tight mt-0.5 whitespace-normal break-words">Secure your spot for the practical training.</p>
+            <h3 className="font-bold text-[13px] sm:text-base text-foreground leading-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/70 whitespace-normal break-words">2026 Cohort Enrollment Open!</h3>
+            <p className="text-[10px] sm:text-sm text-foreground/70 leading-tight mt-0.5 whitespace-normal break-words">Choose your specialized tech track & reserve your seat.</p>
           </div>
           
           <Link href="/register" className="shrink-0 z-10">
@@ -269,7 +273,7 @@ export function HeroSection() {
           {/* Top badge row */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
-              <p className="text-[10px] sm:text-xs font-semibold text-primary">Professional IT Training Center</p>
+              <p className="text-[10px] sm:text-xs font-semibold text-primary">Tech Training Academy &amp; AI Engineering Center</p>
             </div>
             {Array.isArray(batches) && batches.length > 0 && batches[0] && (
               <div className="inline-block px-3 py-1 bg-accent/10 border border-accent/30 rounded-full">
@@ -278,27 +282,28 @@ export function HeroSection() {
             )}
           </div>
 
-          {/* Main heading (clear value prop) */}
+          {/* Main heading */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-balance leading-tight">
-            Gh0sTTech Practical IT &amp; System Engineering Program
+            Gh0sT Tech Academy &amp; AI Engineering Program
           </h1>
 
           {/* Supporting subheading */}
           <p className="text-base md:text-lg text-foreground/80 leading-relaxed max-w-xl">
-            Gain job‑ready, hands‑on skills to assemble PCs, install Windows &amp; Office, and troubleshoot real faults.
+            Gain job-ready, practical skills in <TypingEffect words={typingWords} /> through 100% hands-on lab sessions in Tamale.
           </p>
 
           <div className="flex flex-wrap items-center gap-2 pt-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               Tamale • Gurugu
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
-              Total fee GHS 700
+            <span className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-300">
+              🤖 AI Tools Included
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              Deposit GHS 300 to reserve
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              Courses from GHS 500
             </span>
           </div>
+
 
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-4">

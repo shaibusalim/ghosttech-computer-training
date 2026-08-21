@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import {
   Accordion,
@@ -7,111 +8,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-
-import {
-  HardDrive,
-  Cpu,
-  ShieldCheck,
-  Wrench,
-  Wifi,
-  Download,
-  Monitor,
-  Settings,
-} from "lucide-react"
-
-const MODULES = [
-  {
-    id: "computer-hardware",
-    title: "Computer Hardware Fundamentals",
-     icon: Cpu,
-    points: [
-      "Understanding core components: CPU, RAM, motherboard, storage, PSU",
-      "Identifying faulty hardware and replacing components safely",
-      "Laptop vs desktop hardware differences and repair considerations",
-      "Using diagnostic tools to test hardware performance",
-    ],
-  },
-  {
-    id: "windows-installation",
-    title: "Windows Installation & Setup",
-     icon: Monitor,
-    points: [
-      "Clean installation of Windows 10/11 from scratch",
-      "Creating bootable USB drives and configuring BIOS/UEFI",
-      "System setup, user accounts, updates and security configuration",
-      "Optimising Windows for performance and stability",
-    ],
-  },
-  {
-    id: "disk-partitioning",
-    title: "Disk Partitioning & Storage Management",
-    icon: HardDrive,
-    points: [
-      "Understanding partitions, file systems and storage types",
-      "Creating, resizing and formatting partitions safely",
-      "Managing SSDs vs HDDs and improving disk performance",
-      "Backup strategies before major disk operations",
-    ],
-  },
-  {
-    id: "software-installation",
-    title: "Software Installation & System Setup",
-    icon: Download,
-    points: [
-      "Installing essential software for offices and businesses",
-      "Installing and activating Microsoft Office",
-      "Setting up browsers, utilities and productivity tools",
-      "Managing software updates and compatibility issues",
-    ],
-  },
-  {
-    id: "drivers-updates",
-    title: "Driver Installation & Device Configuration",
-    icon: Settings,
-    points: [
-      "Identifying missing or outdated drivers",
-      "Installing motherboard, graphics and network drivers",
-      "Using manufacturer tools vs Windows Update",
-      "Fixing device manager errors and hardware conflicts",
-    ],
-  },
-  {
-    id: "virus-recovery",
-    title: "Virus Removal & Data Recovery",
-     icon: ShieldCheck,
-    points: [
-      "Detecting malware, spyware and ransomware infections",
-      "Using antivirus tools and safe-mode scanning",
-      "Cleaning infected systems without losing important data",
-      "Basic data recovery techniques and backup strategies",
-    ],
-  },
-  {
-    id: "networking-basics",
-    title: "Networking & Internet Troubleshooting",
-    icon: Wifi,
-    points: [
-      "Understanding IP addresses, routers and local networks",
-      "Setting up wired and wireless connections",
-      "Troubleshooting internet connectivity problems",
-      "Sharing files and printers across a network",
-    ],
-  },
-  {
-    id: "troubleshooting-maintenance",
-    title: "Advanced Troubleshooting & Maintenance",
-       icon: Wrench,
-    points: [
-      "Diagnosing slow computers and performance problems",
-      "Fixing boot failures and system crashes",
-      "Preventive maintenance and system optimisation",
-      "Professional workflow for handling repair clients",
-    ],
-  },
-]
-
+import { Cpu, FileText, Code2, CheckCircle2, Bot, Sparkles } from "lucide-react"
+import { COURSES_CATALOG, ALL_COURSES } from "@/lib/courses-data"
 
 export function CurriculumSection() {
+  const [activeCourseId, setActiveCourseId] = useState<string>("web-dev-frontend-beginner")
+  const activeCourse = COURSES_CATALOG[activeCourseId] || COURSES_CATALOG["web-dev-frontend-beginner"]
+
   return (
     <section
       id="curriculum"
@@ -129,70 +32,111 @@ export function CurriculumSection() {
         >
           <div className="inline-block px-4 py-2 bg-accent/10 border border-accent/30 rounded-full mb-4">
             <p className="text-xs font-semibold text-accent tracking-wide">
-              Curriculum Preview
+              Detailed Module & Syllabus Breakdown
             </p>
           </div>
 
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold mb-4">
             What You’ll Learn
           </h2>
 
-          <p className="text-base md:text-lg text-foreground/70 max-w-2xl mx-auto">
-            This training focuses on practical real-world computer repair,
-            troubleshooting and system maintenance skills you can use for
-            work, freelancing or starting your own tech service business.
+          <p className="text-base md:text-lg text-foreground/70 max-w-2xl mx-auto mb-8">
+            Select a program below to inspect week-by-week practical modules, core technologies, and integrated AI lab tools.
           </p>
+
+          {/* Course Switcher Tabs */}
+          <div className="flex flex-wrap justify-center gap-2 p-2 bg-card/80 backdrop-blur-md rounded-2xl border border-border/60 max-w-4xl mx-auto">
+            {ALL_COURSES.map((course) => (
+              <button
+                key={course.id}
+                type="button"
+                onClick={() => setActiveCourseId(course.id)}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all ${
+                  activeCourseId === course.id
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
+                    : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {course.category === "Hardware" && <Cpu className="w-4 h-4 text-emerald-400" />}
+                {course.category === "Productivity" && <FileText className="w-4 h-4 text-cyan-400" />}
+                {course.category === "Software" && <Code2 className="w-4 h-4 text-purple-400" />}
+                <span>{course.title.split("&")[0].trim()}</span>
+              </button>
+            ))}
+          </div>
         </motion.div>
 
-        {/* Curriculum Card */}
+        {/* Selected Course Header Banner */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm shadow-xl"
+          key={activeCourse.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6 p-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-card/90 via-card/60 to-card/40 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl"
         >
-          <Accordion type="single" collapsible defaultValue={MODULES[0]?.id}>
-            {MODULES.map((module, index) => {
-              const Icon = module.icon
+          <div>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${activeCourse.badgeClass}`}>
+                {activeCourse.category} Track
+              </span>
+              {activeCourse.hasAiIncluded && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
+                  <Bot className="w-3.5 h-3.5 text-purple-400" /> AI Tooling Included
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground">• {activeCourse.duration} Program</span>
+            </div>
+            <h3 className="text-2xl font-bold">{activeCourse.title}</h3>
+            <p className="text-sm text-foreground/70 mt-1">{activeCourse.subtitle}</p>
+          </div>
+          <div className="text-right shrink-0 bg-muted/30 p-4 rounded-xl border border-border/50">
+            <span className="text-xs text-muted-foreground block">Tuition Fee</span>
+            <span className="text-2xl font-bold text-primary">GHS {activeCourse.totalFee}</span>
+            <span className="text-xs text-muted-foreground block font-medium">Seat Deposit: GHS {activeCourse.requiredDeposit}</span>
+          </div>
+        </motion.div>
 
-              return (
-                <AccordionItem
-                  key={module.id}
-                  value={module.id}
-                  className="px-4 md:px-6"
-                >
-                  <AccordionTrigger className="py-5 hover:no-underline">
-                    <div className="flex items-center gap-4 text-left">
-
-                      {/* Module Number */}
-                      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-bold">
-                        {index + 1}
-                      </div>
-
-                      {/* Icon */}
-                      <Icon className="h-5 w-5 text-primary" />
-
-                      {/* Title */}
-                      <span className="font-semibold text-sm md:text-base">
-                        {module.title}
-                      </span>
+        {/* Curriculum Modules Accordion */}
+        <motion.div
+          key={`accordion-${activeCourse.id}`}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm shadow-xl overflow-hidden"
+        >
+          <Accordion type="single" collapsible defaultValue={activeCourse.syllabus[0]?.week}>
+            {activeCourse.syllabus.map((module) => (
+              <AccordionItem
+                key={module.week}
+                value={module.week}
+                className="px-4 md:px-6"
+              >
+                <AccordionTrigger className="py-5 hover:no-underline">
+                  <div className="flex items-center gap-4 text-left">
+                    <div className="flex items-center justify-center h-8 px-3 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
+                      {module.week}
                     </div>
-                  </AccordionTrigger>
+                    <span className="font-semibold text-base md:text-lg text-foreground">
+                      {module.title}
+                    </span>
+                  </div>
+                </AccordionTrigger>
 
-                  <AccordionContent>
-                    <ul className="space-y-3 text-sm text-foreground/75 pt-2">
-                      {module.points.map((point) => (
-                        <li key={point} className="flex gap-3">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                          <span>{point}</span>
+                <AccordionContent>
+                  <div className="pb-4 pt-1 px-2 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Topics & Practical Lab Exercises:</p>
+                    <ul className="space-y-2.5">
+                      {module.topics.map((topic, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm text-foreground/80">
+                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <span>{topic}</span>
                         </li>
                       ))}
                     </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              )
-            })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
           </Accordion>
         </motion.div>
       </div>
