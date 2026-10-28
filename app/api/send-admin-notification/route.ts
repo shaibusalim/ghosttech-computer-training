@@ -1,13 +1,23 @@
 import { sendEmail, emailTemplates } from "@/lib/email-utils"
+import { requireAdmin } from "@/lib/admin-auth"
 
+/** Admin-only helper for sending notification emails. Not exposed to the public. */
 export async function POST(request: Request) {
   try {
+    const denied = await requireAdmin()
+    if (denied) return denied
+
     const body = await request.json()
     const { type = "registration" } = body
 
     if (type === "payment") {
       const { full_name, email, payment_status, payment_amount } = body
-      const amountText = payment_status === "partial" ? `Part payment received: GHS ${payment_amount}` : payment_status === "full" ? "Full payment received: GHS 700" : "No payment recorded"
+      const amountText =
+        payment_status === "partial"
+          ? `Part payment received: GHS ${Number(payment_amount) || 0}`
+          : payment_status === "full"
+            ? `Full payment received${Number(payment_amount) ? `: GHS ${Number(payment_amount)}` : ""}`
+            : "No payment recorded"
       const html = emailTemplates.payment(full_name, payment_status, amountText)
       
       await sendEmail({
@@ -59,7 +69,7 @@ export async function POST(request: Request) {
 
     return Response.json({ success: true }, { status: 200 })
   } catch (error) {
-    console.error("[v0] Admin notification API error:", error)
+    console.error("Admin notification API error:", error)
     return Response.json({ error: "Failed to send notification" }, { status: 500 })
   }
 }

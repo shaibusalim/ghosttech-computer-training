@@ -17,20 +17,12 @@ CREATE TABLE IF NOT EXISTS registrations (
   status VARCHAR(50) DEFAULT 'pending'
 );
 
--- Enable Row Level Security
+-- Enable Row Level Security.
+-- IMPORTANT: no policies are created on purpose. All access to this table goes through
+-- server routes using the service-role key (which bypasses RLS). Never add USING (true)
+-- policies here: the anon key is public and would expose every student's data.
+-- See scripts/03-lock-down-rls.sql.
 ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
-
--- Create policy to allow anyone to insert registrations
-CREATE POLICY "Anyone can insert registrations" ON registrations
-  FOR INSERT WITH CHECK (true);
-
--- Create policy to allow admins to view all registrations
-CREATE POLICY "Admins can view all registrations" ON registrations
-  FOR SELECT USING (true);
-
--- Create policy to allow admins to update registrations
-CREATE POLICY "Admins can update registrations" ON registrations
-  FOR UPDATE USING (true);
 
 -- Create index on email for faster lookups
 CREATE INDEX IF NOT EXISTS idx_registrations_email ON registrations(email);

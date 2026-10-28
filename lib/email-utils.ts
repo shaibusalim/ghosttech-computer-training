@@ -35,8 +35,23 @@ export async function sendEmail({
   }
 }
 
+/** Escapes user-supplied text before it is interpolated into HTML email bodies. */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
 export const emailTemplates = {
-  registration: (fullName: string, courseName: string, requiredDeposit?: number, backendPref?: string) => `
+  registration: (fullNameRaw: string, courseNameRaw: string, requiredDeposit?: number, backendPrefRaw?: string) => {
+    const fullName = escapeHtml(fullNameRaw)
+    const courseName = escapeHtml(courseNameRaw)
+    const backendPref = backendPrefRaw ? escapeHtml(backendPrefRaw) : ""
+    const deposit = Number.isFinite(Number(requiredDeposit)) && Number(requiredDeposit) > 0 ? Number(requiredDeposit) : 300
+    return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -66,7 +81,7 @@ export const emailTemplates = {
               <p><strong>Student Name:</strong> ${fullName}</p>
               <p><strong>Selected Course:</strong> ${courseName}</p>
               ${backendPref ? `<p><strong>Backend Track:</strong> ${backendPref}</p>` : ""}
-              <p><strong>Seat Deposit Required:</strong> GHS ${requiredDeposit || 300}</p>
+              <p><strong>Seat Deposit Required:</strong> GHS ${deposit}</p>
               <p><strong>Training Venue:</strong> Tamale - Gurugu, Ghana</p>
             </div>
             <div class="info-box">
@@ -83,8 +98,13 @@ export const emailTemplates = {
         </div>
       </body>
     </html>
-  `,
-  payment: (fullName: string, paymentStatus: string, amountText: string) => `
+  `
+  },
+  payment: (fullNameRaw: string, paymentStatusRaw: string, amountTextRaw: string) => {
+    const fullName = escapeHtml(fullNameRaw)
+    const paymentStatus = escapeHtml(paymentStatusRaw)
+    const amountText = escapeHtml(amountTextRaw)
+    return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -121,8 +141,11 @@ export const emailTemplates = {
         </div>
       </body>
     </html>
-  `,
-  approval: (fullName: string) => `
+  `
+  },
+  approval: (fullNameRaw: string) => {
+    const fullName = escapeHtml(fullNameRaw)
+    return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -158,8 +181,13 @@ export const emailTemplates = {
         </div>
       </body>
     </html>
-  `,
-  adminAlert: (details: any) => `
+  `
+  },
+  adminAlert: (rawDetails: any) => {
+    const details = Object.fromEntries(
+      Object.entries(rawDetails ?? {}).map(([k, v]) => [k, escapeHtml(v)]),
+    ) as Record<string, string>
+    return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -199,5 +227,6 @@ export const emailTemplates = {
         </div>
       </body>
     </html>
-  `,
+  `
+  },
 }

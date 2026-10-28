@@ -1,37 +1,56 @@
 import { NextRequest } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
-
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
+import { checkRateLimit, getClientKey } from "@/lib/utils"
+import { getCourseById } from "@/lib/courses-data"
+import { PAYSTACK_CURRENCY, getPaystackSecret, isUuid } from "@/lib/payments"
 
 export async function POST(request: NextRequest) {
   try {
-    const { registrationId, amount: clientAmount, momoNumber, momoProvider } = await request.json()
+    const rl = checkRateLimit(`pay-init:${getClientKey(request)}`, 15, 10 * 60 * 1000)
+    if (!rl.allowed) {
+      return Response.json({ error: "Too many requests" }, { status: 429 })
+    }
 
-    if (!registrationId) {
-      return Response.json({ error: "Missing registrationId" }, { status: 400 })
+    const secret = getPaystackSecret()
+    if (!secret) {
+      console.error("PAYSTACK_SECRET_KEY is not configured")
+      return Response.json({ error: "Server configuration error" }, { status: 500 })
+    }
+
+    const body = await request.json().catch(() => null)
+    const registrationId = body?.registrationId
+
+    if (!isUuid(registrationId)) {
+      return Response.json({ error: "Missing or invalid registrationId" }, { status: 400 })
     }
 
     const { data: registrationData, error: fetchError } = await supabaseAdmin
-      .from('registrations')
-      .select('email, full_name, required_deposit, total_fee, course_selection')
-      .eq('id', registrationId)
+      .from("registrations")
+      .select("email, full_name, course_id, required_deposit, course_selection, payment_status, status")
+      .eq("id", registrationId)
       .single()
 
     if (fetchError || !registrationData) {
       return Response.json({ error: "Registration not found" }, { status: 404 })
     }
 
-    const { email, full_name, required_deposit, total_fee, course_selection } = registrationData
+    const { email, full_name, course_id, required_deposit, course_selection, payment_status, status } = registrationData
 
-    // Use required_deposit from database if present, otherwise fall back to client passed amount or default 300 GHS
-    const depositGHS = required_deposit ? Number(required_deposit) : (clientAmount ? Number(clientAmount) / 100 : 300)
+    if (payment_status === "full" || status === "approved") {
+      return Response.json({ error: "This registration is already paid" }, { status: 400 })
+    }
+
+    // The amount is decided by the server only. Any client-supplied amount is ignored.
+    const course = getCourseById(course_id || "")
+    const depositGHS = Number(required_deposit) || course.requiredDeposit
     const amountInKobo = Math.round(depositGHS * 100)
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
 
-    const paystackBody: any = {
+    const paystackBody = {
       email,
       amount: amountInKobo,
+      currency: PAYSTACK_CURRENCY,
       metadata: {
         full_name,
         registrationId,
@@ -40,37 +59,43 @@ export async function POST(request: NextRequest) {
           {
             display_name: "Registration ID",
             variable_name: "registration_id",
-            value: registrationId
+            value: registrationId,
           },
           {
             display_name: "Course Selection",
             variable_name: "course_selection",
-            value: course_selection || "Tech Training"
-          }
-        ]
+            value: course_selection || "Tech Training",
+          },
+        ],
       },
-      channels: ['mobile_money', 'card'],
+      channels: ["mobile_money", "card"],
       callback_url: `${baseUrl}/register/payment/callback?registrationId=${registrationId}`,
     }
 
     const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${secret}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(paystackBody),
     })
 
-    const paystackData = await paystackResponse.json()
+    const paystackData = await paystackResponse.json().catch(() => null)
 
-    if (!paystackResponse.ok) {
+    if (!paystackResponse.ok || !paystackData?.data?.authorization_url) {
       console.error("Paystack API error:", paystackData)
-      return Response.json({ error: paystackData.message || "Failed to initialize Paystack transaction" }, { status: 500 })
+      return Response.json({ error: "Failed to initialize Paystack transaction" }, { status: 502 })
     }
 
-    return Response.json({ authorization_url: paystackData.data.authorization_url, amount: depositGHS }, { status: 200 })
-
+    return Response.json(
+      {
+        authorization_url: paystackData.data.authorization_url,
+        reference: paystackData.data.reference,
+        amount: depositGHS,
+      },
+      { status: 200 },
+    )
   } catch (error) {
     console.error("Error initializing Paystack transaction:", error)
     return Response.json({ error: "Failed to initialize Paystack transaction" }, { status: 500 })

@@ -20,8 +20,11 @@ export interface Course {
   borderHoverClass: string
   badgeClass: string
   hasAiIncluded: boolean
+  hasBackendOption?: boolean
   highlights: string[]
   syllabus: CourseModule[]
+  isActive?: boolean
+  orderIndex?: number
 }
 
 export const COURSES_CATALOG: Record<string, Course> = {
@@ -220,6 +223,7 @@ export const COURSES_CATALOG: Record<string, Course> = {
     borderHoverClass: "hover:border-fuchsia-500/50",
     badgeClass: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30",
     hasAiIncluded: true,
+    hasBackendOption: true,
     highlights: [
       "Complete Frontend (HTML, CSS, JS, React 19, Next.js 15)",
       "Complete Backend (Node.js/Express OR PHP 8+ REST APIs)",
@@ -236,6 +240,58 @@ export const COURSES_CATALOG: Record<string, Course> = {
 }
 
 export const ALL_COURSES = Object.values(COURSES_CATALOG)
+
+export function getCategoryStyles(category: string) {
+  if (category === "Hardware") {
+    return {
+      accentColor: "from-emerald-500 to-teal-600",
+      glowClass: "shadow-emerald-500/20",
+      borderHoverClass: "hover:border-emerald-500/50",
+      badgeClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    }
+  }
+  if (category === "Productivity") {
+    return {
+      accentColor: "from-cyan-500 to-blue-600",
+      glowClass: "shadow-cyan-500/20",
+      borderHoverClass: "hover:border-cyan-500/50",
+      badgeClass: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+    }
+  }
+  // Software & default
+  return {
+    accentColor: "from-violet-500 to-purple-600",
+    glowClass: "shadow-violet-500/20",
+    borderHoverClass: "hover:border-violet-500/50",
+    badgeClass: "bg-violet-500/10 text-violet-400 border-violet-500/30",
+  }
+}
+
+export function mapDbCourseToCourse(row: any): Course {
+  const styles = getCategoryStyles(row.category)
+  return {
+    id: row.id,
+    slug: row.slug || row.id,
+    title: row.title,
+    subtitle: row.subtitle || "",
+    category: row.category || "Software",
+    subCategory: row.sub_category || undefined,
+    duration: row.duration || "4 Weeks",
+    totalFee: Number(row.total_fee) || 0,
+    requiredDeposit: Number(row.required_deposit) || 0,
+    badge: row.badge || undefined,
+    accentColor: row.accent_color || styles.accentColor,
+    glowClass: styles.glowClass,
+    borderHoverClass: styles.borderHoverClass,
+    badgeClass: styles.badgeClass,
+    hasAiIncluded: Boolean(row.has_ai_included),
+    hasBackendOption: Boolean(row.has_backend_option),
+    highlights: Array.isArray(row.highlights) ? row.highlights : [],
+    syllabus: Array.isArray(row.syllabus) ? row.syllabus : [],
+    isActive: row.is_active !== false,
+    orderIndex: row.order_index ?? 0,
+  }
+}
 
 export function getCourseById(id: string): Course {
   return COURSES_CATALOG[id] || COURSES_CATALOG["hardware-engineering"]

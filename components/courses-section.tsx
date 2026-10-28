@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, Cpu, FileText, Code2, ArrowRight, ShieldCheck, Sparkles, Bot } from "lucide-react"
@@ -19,7 +19,18 @@ const ICON_MAP: Record<string, any> = {
 
 export function CoursesSection() {
   const [activeCategory, setActiveCategory] = useState<string>("All")
-  const coursesList = Object.values(COURSES_CATALOG)
+  const [coursesList, setCoursesList] = useState<Course[]>(Object.values(COURSES_CATALOG))
+
+  useEffect(() => {
+    fetch("/api/courses", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.courses) && data.courses.length > 0) {
+          setCoursesList(data.courses)
+        }
+      })
+      .catch((err) => console.warn("Failed to fetch dynamic courses:", err))
+  }, [])
 
   const filteredCourses = coursesList.filter((course) => {
     if (activeCategory === "All") return true
@@ -140,24 +151,35 @@ export function CoursesSection() {
         >
           {filteredCourses.map((course) => {
             const IconComponent = ICON_MAP[course.id] || Cpu
+            const isAvailable = course.isActive !== false
+
             return (
               <motion.div key={course.id} variants={itemVariants} className="flex">
                 <Card
-                  className={`flex flex-col justify-between w-full border-primary/20 bg-card/60 backdrop-blur-md ${course.borderHoverClass} transition-all duration-300 group shadow-xl ${course.glowClass} hover:-translate-y-1.5`}
+                  className={`flex flex-col justify-between w-full border-primary/20 backdrop-blur-md transition-all duration-300 group shadow-xl ${
+                    isAvailable
+                      ? `bg-card/60 ${course.borderHoverClass} ${course.glowClass} hover:-translate-y-1.5`
+                      : "bg-card/40 border-border/40 opacity-80"
+                  }`}
                 >
                   <div>
                     <CardHeader className="space-y-4">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <div className={`w-12 h-12 bg-gradient-to-br ${course.accentColor} rounded-xl flex items-center justify-center text-white shadow-md`}>
+                        <div className={`w-12 h-12 bg-gradient-to-br ${isAvailable ? course.accentColor : "from-slate-600 to-slate-800"} rounded-xl flex items-center justify-center text-white shadow-md`}>
                           <IconComponent className="w-6 h-6" />
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {!isAvailable && (
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                              Course Unavailable
+                            </span>
+                          )}
                           {course.hasAiIncluded && (
                             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1">
                               <Bot className="w-3 h-3 text-purple-400" /> AI Included
                             </span>
                           )}
-                          {course.badge && (
+                          {course.badge && isAvailable && (
                             <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${course.badgeClass}`}>
                               {course.badge}
                             </span>
@@ -174,7 +196,7 @@ export function CoursesSection() {
                             </span>
                           )}
                         </div>
-                        <CardTitle className="text-xl font-bold mt-1 group-hover:text-primary transition-colors line-clamp-2">
+                        <CardTitle className={`text-xl font-bold mt-1 transition-colors line-clamp-2 ${isAvailable ? "group-hover:text-primary" : "text-muted-foreground"}`}>
                           {course.title}
                         </CardTitle>
                       </div>
@@ -193,6 +215,11 @@ export function CoursesSection() {
                           <span>Deposit to reserve seat:</span>
                           <span>GHS {course.requiredDeposit}</span>
                         </div>
+                        {!isAvailable && (
+                          <p className="text-[11px] font-medium text-amber-400/90 pt-1 border-t border-border/30">
+                            Enrollment currently closed for this batch
+                          </p>
+                        )}
                       </div>
                     </CardHeader>
 
@@ -201,7 +228,7 @@ export function CoursesSection() {
                       <ul className="space-y-2.5">
                         {course.highlights.map((highlight, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
-                            <CheckCircle className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                            <CheckCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isAvailable ? "text-primary" : "text-muted-foreground"}`} />
                             <span>{highlight}</span>
                           </li>
                         ))}
@@ -210,13 +237,24 @@ export function CoursesSection() {
                   </div>
 
                   <div className="p-6 pt-0">
-                    <Link
-                      href={`/register?course=${course.id}`}
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs md:text-sm transition-all shadow-md group-hover:shadow-lg"
-                    >
-                      <span>Enroll in {course.title.split("&")[0]}</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                    {isAvailable ? (
+                      <Link
+                        href={`/register?course=${course.id}`}
+                        className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs md:text-sm transition-all shadow-md group-hover:shadow-lg"
+                      >
+                        <span>Enroll in {course.title.split("&")[0]}</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                        className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-muted text-muted-foreground font-semibold text-xs md:text-sm cursor-not-allowed border border-border/60"
+                      >
+                        <span>Course Unavailable</span>
+                      </button>
+                    )}
                   </div>
                 </Card>
               </motion.div>

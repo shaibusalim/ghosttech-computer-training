@@ -1,27 +1,32 @@
-import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { sendEmail, emailTemplates } from "@/lib/email-utils"
+import { requireAdmin } from "@/lib/admin-auth"
+import { isUuid } from "@/lib/payments"
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check admin authentication
-    const cookieStore = await cookies()
-    const adminAuth = cookieStore.get('admin_auth')
-
-    if (!adminAuth) {
-      return Response.json({ error: "No auth cookie" }, { status: 401 })
-    }
-
-    if (adminAuth.value !== 'true') {
-      return Response.json({ error: "Invalid auth cookie" }, { status: 401 })
-    }
+    const denied = await requireAdmin()
+    if (denied) return denied
 
     const { id } = await context.params
-    const { email, full_name } = await request.json()
+    if (!isUuid(id)) {
+      return Response.json({ error: "Invalid ID" }, { status: 400 })
+    }
+
+    // Recipient details come from the database, never from the request body.
+    const { data: reg, error: fetchError } = await supabaseAdmin
+      .from('registrations')
+      .select('email, full_name')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !reg) {
+      return Response.json({ error: "Registration not found" }, { status: 404 })
+    }
 
     // Update the registration status to approved
     const { error: updateError } = await supabaseAdmin
@@ -33,14 +38,14 @@ export async function POST(
 
     // Send approval email
     try {
-      const html = emailTemplates.approval(full_name)
+      const html = emailTemplates.approval(reg.full_name)
       await sendEmail({
-        to: email,
+        to: reg.email,
         subject: "🎉 Welcome to Gh0sT Tech - Registration Approved!",
         html,
       })
     } catch (emailError) {
-      console.error("[v0] Approval email error (registration still approved):", emailError)
+      console.error("Approval email error (registration still approved):", emailError)
     }
 
     return Response.json({ success: true }, { status: 200 })

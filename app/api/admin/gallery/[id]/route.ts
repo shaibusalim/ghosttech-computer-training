@@ -1,20 +1,20 @@
-import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/admin-auth"
+import { isUuid } from "@/lib/payments"
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const cookieStore = await cookies()
-    const adminAuth = cookieStore.get("admin_auth")
-
-    if (!adminAuth || adminAuth.value !== "true") {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const denied = await requireAdmin()
+    if (denied) return denied
 
     const { id } = await context.params
+    if (!isUuid(id) && !/^\d+$/.test(id)) {
+      return Response.json({ error: "Invalid ID" }, { status: 400 })
+    }
 
     const { data: doc, error: fetchError } = await supabaseAdmin
       .from('gallery')

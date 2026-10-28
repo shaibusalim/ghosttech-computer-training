@@ -1,15 +1,19 @@
-import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/admin-auth"
+
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/avif": "avif",
+  "image/gif": "gif",
+}
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const adminAuth = cookieStore.get("admin_auth")
-
-    if (!adminAuth || adminAuth.value !== "true") {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const denied = await requireAdmin()
+    if (denied) return denied
 
     const { data: items, error } = await supabaseAdmin
       .from('gallery')
@@ -27,12 +31,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const adminAuth = cookieStore.get("admin_auth")
-
-    if (!adminAuth || adminAuth.value !== "true") {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const denied = await requireAdmin()
+    if (denied) return denied
 
     const { title, description, category, imageData } = (await request.json()) as {
       title?: string
@@ -41,17 +41,21 @@ export async function POST(request: NextRequest) {
       imageData?: string
     }
 
-    if (!title || !imageData || !category) {
-      return Response.json({ error: "Missing required fields" }, { status: 400 })
+    if (typeof title !== "string" || typeof category !== "string" || typeof imageData !== "string" || !title.trim() || !category.trim() || title.length > 200 || category.length > 100) {
+      return Response.json({ error: "Missing or invalid fields" }, { status: 400 })
     }
 
-    // imageData is expected as data:<mime>;base64,<payload>
-    const match = imageData.match(/^data:(.+);base64,(.+)$/)
+    // imageData is expected as data:<mime>;base64,<payload> with an allow-listed raster image type
+    const match = imageData.match(/^data:([a-z]+\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/)
     if (!match) {
       return Response.json({ error: "Invalid image data" }, { status: 400 })
     }
 
     const mime = match[1]
+    const extension = ALLOWED_IMAGE_TYPES[mime]
+    if (!extension) {
+      return Response.json({ error: "Unsupported image type" }, { status: 400 })
+    }
     const data = match[2]
     const buffer = Buffer.from(data, "base64")
 
@@ -60,9 +64,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "File too large" }, { status: 400 })
     }
 
-    const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "image"
     const timestamp = Date.now()
-    const extension = mime.split("/")[1] || "jpg"
     const storagePathRaw = `gallery/${safeTitle}-${timestamp}.${extension}`
 
     // Upload to Supabase Storage

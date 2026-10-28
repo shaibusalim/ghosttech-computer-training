@@ -1,49 +1,61 @@
 import { NextRequest } from "next/server"
-import { supabaseAdmin } from "@/lib/supabase/server"
-
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
+import { checkRateLimit, getClientKey } from "@/lib/utils"
+import { getPaystackSecret, isUuid, isValidReference, recordPaystackPayment } from "@/lib/payments"
 
 export async function POST(request: NextRequest) {
   try {
-    const { registrationId, reference } = await request.json()
-
-    if (!registrationId || !reference) {
-      return Response.json({ error: "Missing registrationId or reference" }, { status: 400 })
+    const rl = checkRateLimit(`verify-payment:${getClientKey(request)}`, 20, 10 * 60 * 1000)
+    if (!rl.allowed) {
+      return Response.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const paystackResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-      headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-      },
-    })
-
-    const paystackData = await paystackResponse.json()
-
-    if (!paystackResponse.ok || !paystackData.data || paystackData.data.status !== "success") {
-      return Response.json({ error: paystackData.data.gateway_response || "Payment not successful" }, { status: 400 })
+    const secret = getPaystackSecret()
+    if (!secret) {
+      console.error("PAYSTACK_SECRET_KEY is not configured")
+      return Response.json({ error: "Server configuration error" }, { status: 500 })
     }
 
-    const { amount, metadata } = paystackData.data
+    const body = await request.json().catch(() => null)
+    const registrationId = body?.registrationId
+    const reference = body?.reference
 
-    if (metadata.registrationId !== registrationId) {
+    if (!isUuid(registrationId) || !isValidReference(reference)) {
+      return Response.json({ error: "Missing or invalid registrationId or reference" }, { status: 400 })
+    }
+
+    // Never trust the client: ask Paystack whether this reference really succeeded.
+    const paystackResponse = await fetch(
+      `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
+      { headers: { Authorization: `Bearer ${secret}` }, cache: "no-store" },
+    )
+    const paystackData = await paystackResponse.json().catch(() => null)
+
+    if (!paystackResponse.ok || !paystackData?.data || paystackData.data.status !== "success") {
+      return Response.json(
+        { error: paystackData?.data?.gateway_response || "Payment not successful" },
+        { status: 400 },
+      )
+    }
+
+    const { amount, currency, metadata } = paystackData.data
+
+    if (metadata?.registrationId !== registrationId) {
       return Response.json({ error: "Invalid registration ID" }, { status: 400 })
     }
 
-    const { error: updateError } = await supabaseAdmin
-      .from('registrations')
-      .update({
-        payment_status: amount === 70000 ? "full" : "partial",
-        payment_amount: amount / 100, // convert from kobo to GHS
-        payment_reference: reference,
-        payment_method: "paystack",
-        payment_confirmed_at: new Date().toISOString(),
-      })
-      .eq('id', registrationId)
+    const result = await recordPaystackPayment({
+      registrationId,
+      reference,
+      amountKobo: Number(amount),
+      currency: String(currency || ""),
+    })
 
-    if (updateError) throw updateError
+    if (!result.ok) {
+      const status = result.code === "not_found" ? 404 : result.code === "db" ? 500 : 400
+      return Response.json({ error: result.message }, { status })
+    }
 
     return Response.json({ status: "success" }, { status: 200 })
-
   } catch (error) {
     console.error("Error verifying Paystack transaction:", error)
     return Response.json({ error: "Failed to verify Paystack transaction" }, { status: 500 })

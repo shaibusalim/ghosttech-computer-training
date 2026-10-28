@@ -1,14 +1,10 @@
-import { cookies } from "next/headers"
 import { supabaseAdmin } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/admin-auth"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const adminAuth = cookieStore.get('admin_auth')
-
-    if (!adminAuth || adminAuth.value !== 'true') {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const denied = await requireAdmin()
+    if (denied) return denied
 
     // Fetch all registrations ordered by creation date (newest first)
     const { data: registrations, error: fetchError } = await supabaseAdmin

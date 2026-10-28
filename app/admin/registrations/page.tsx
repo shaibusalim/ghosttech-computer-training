@@ -7,7 +7,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { LogOut, RefreshCw, Trash2, Check, CreditCard, Loader2, Eye } from "lucide-react"
+import {
+  LogOut,
+  RefreshCw,
+  Trash2,
+  Check,
+  CreditCard,
+  Loader2,
+  Eye,
+  BookOpen,
+  Plus,
+  Pencil,
+  Layers,
+  Users,
+  Sparkles,
+  Cpu,
+  FileText,
+  Code2,
+  AlertCircle,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   AlertDialog,
@@ -23,6 +41,10 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { Course, ALL_COURSES } from "@/lib/courses-data"
 
 interface GalleryItemSummary {
   id: string
@@ -73,7 +95,31 @@ export default function AdminRegistrationsPage() {
   const [uploadTitle, setUploadTitle] = useState("")
   const [uploadDescription, setUploadDescription] = useState("")
   const [uploadCategory, setUploadCategory] = useState<"installation" | "virus-removal" | "hardware" | "classroom">("installation")
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [courseFilter, setCourseFilter] = useState<string>("all")
+
+  // Courses Management State
+  const [courses, setCourses] = useState<Course[]>(ALL_COURSES)
+  const [coursesLoading, setCoursesLoading] = useState(false)
+  const [courseDialogOpen, setCourseDialogOpen] = useState(false)
+  const [courseDialogMode, setCourseDialogMode] = useState<"create" | "edit">("edit")
+  const [courseSaving, setCourseSaving] = useState(false)
+  const [editingCourseId, setEditingCourseId] = useState<string>("")
+  const [courseForm, setCourseForm] = useState({
+    id: "",
+    title: "",
+    subtitle: "",
+    category: "Software" as "Hardware" | "Productivity" | "Software",
+    duration: "4 Weeks",
+    totalFee: 700,
+    requiredDeposit: 300,
+    badge: "",
+    highlights: "",
+    hasAiIncluded: false,
+    hasBackendOption: false,
+    isActive: true,
+  })
+
   const { toast } = useToast()
   const router = useRouter()
 
@@ -89,12 +135,30 @@ export default function AdminRegistrationsPage() {
       if (response.ok) {
         setIsAuthenticated(true)
         fetchRegistrations()
+        fetchCourses()
         fetchGallery()
       } else {
         router.push("/gh0st-secure-access")
       }
     } catch {
       router.push("/gh0st-secure-access")
+    }
+  }
+
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true)
+      const res = await fetch("/api/admin/courses", { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.courses) && data.courses.length > 0) {
+          setCourses(data.courses)
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load courses:", err)
+    } finally {
+      setCoursesLoading(false)
     }
   }
 
@@ -380,6 +444,151 @@ export default function AdminRegistrationsPage() {
     }
   }
 
+  const handleOpenCreateCourse = () => {
+    setCourseDialogMode("create")
+    setEditingCourseId("")
+    setCourseForm({
+      id: "",
+      title: "",
+      subtitle: "",
+      category: "Software",
+      duration: "4 Weeks",
+      totalFee: 700,
+      requiredDeposit: 300,
+      badge: "",
+      highlights: "",
+      hasAiIncluded: true,
+      hasBackendOption: false,
+      isActive: true,
+    })
+    setCourseDialogOpen(true)
+  }
+
+  const handleOpenEditCourse = (course: Course) => {
+    setCourseDialogMode("edit")
+    setEditingCourseId(course.id)
+    setCourseForm({
+      id: course.id,
+      title: course.title,
+      subtitle: course.subtitle || "",
+      category: course.category,
+      duration: course.duration,
+      totalFee: course.totalFee,
+      requiredDeposit: course.requiredDeposit,
+      badge: course.badge || "",
+      highlights: Array.isArray(course.highlights) ? course.highlights.join("\n") : "",
+      hasAiIncluded: Boolean(course.hasAiIncluded),
+      hasBackendOption: Boolean(course.hasBackendOption),
+      isActive: course.isActive !== false,
+    })
+    setCourseDialogOpen(true)
+  }
+
+  const handleToggleCourseActive = async (course: Course) => {
+    const nextActive = course.isActive === false ? true : false
+    // Optimistic UI update
+    setCourses((prev) =>
+      prev.map((c) => (c.id === course.id ? { ...c, isActive: nextActive } : c))
+    )
+
+    try {
+      const res = await fetch(`/api/admin/courses/${course.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ is_active: nextActive }),
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        toast({
+          title: "Update failed",
+          description: errorData.error || "Could not update course visibility",
+          variant: "destructive",
+        })
+        // Revert
+        fetchCourses()
+      } else {
+        toast({
+          title: nextActive ? "Registration Opened" : "Course Marked Unavailable",
+          description: `${course.title} is now ${nextActive ? "open for enrollment on the website" : "marked as unavailable (registration disabled)"}.`,
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Network error",
+        description: "Failed to update course status",
+        variant: "destructive",
+      })
+      fetchCourses()
+    }
+  }
+
+  const handleSaveCourse = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!courseForm.id || !courseForm.title) {
+      toast({
+        title: "Missing fields",
+        description: "Course ID and Title are required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setCourseSaving(true)
+      const highlightsArray = courseForm.highlights
+        .split("\n")
+        .map((h) => h.trim())
+        .filter((h) => h.length > 0)
+
+      const payload = {
+        id: courseForm.id.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-"),
+        title: courseForm.title.trim(),
+        subtitle: courseForm.subtitle.trim(),
+        category: courseForm.category,
+        duration: courseForm.duration.trim(),
+        total_fee: Number(courseForm.totalFee),
+        required_deposit: Number(courseForm.requiredDeposit),
+        badge: courseForm.badge.trim() || null,
+        highlights: highlightsArray,
+        has_ai_included: courseForm.hasAiIncluded,
+        has_backend_option: courseForm.hasBackendOption,
+        is_active: courseForm.isActive,
+      }
+
+      const res = await fetch("/api/admin/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        toast({
+          title: "Success",
+          description: `Course "${payload.title}" saved successfully`,
+        })
+        setCourseDialogOpen(false)
+        await fetchCourses()
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast({
+          title: "Save failed",
+          description: err.error || "Could not save course",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "An error occurred while saving the course",
+        variant: "destructive",
+      })
+    } finally {
+      setCourseSaving(false)
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -420,8 +629,8 @@ export default function AdminRegistrationsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Pending Payments</CardDescription>
-              <CardTitle className="text-2xl">{pendingPayments}</CardTitle>
+              <CardDescription>Active Courses</CardDescription>
+              <CardTitle className="text-2xl">{courses.filter((c) => c.isActive !== false).length} / {courses.length}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
@@ -432,16 +641,48 @@ export default function AdminRegistrationsPage() {
           </Card>
         </div>
 
-        {/* Registrations table */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <CardTitle>Registrations</CardTitle>
-                <CardDescription>
-                  View and manage course registrations
-                </CardDescription>
-              </div>
+        {/* Navigation Tabs */}
+        <Tabs defaultValue="registrations" className="w-full space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <TabsList className="bg-card border p-1 rounded-xl h-auto flex flex-wrap gap-1">
+              <TabsTrigger
+                value="registrations"
+                className="flex items-center gap-2 py-2 px-4 rounded-lg data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground font-semibold"
+              >
+                <Users className="w-4 h-4" />
+                Registrations
+                <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-muted/60">{registrations.length}</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="courses"
+                className="flex items-center gap-2 py-2 px-4 rounded-lg data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground font-semibold"
+              >
+                <BookOpen className="w-4 h-4" />
+                Course Management
+                <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-muted/60">{courses.length}</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="gallery"
+                className="flex items-center gap-2 py-2 px-4 rounded-lg data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground font-semibold"
+              >
+                <Layers className="w-4 h-4" />
+                Gallery
+                <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-muted/60">{galleryItems.length}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* TAB 1: REGISTRATIONS */}
+          <TabsContent value="registrations" className="space-y-6 m-0">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Registrations</CardTitle>
+                    <CardDescription>
+                      View and manage course registrations
+                    </CardDescription>
+                  </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <select
                   value={courseFilter}
@@ -754,8 +995,128 @@ export default function AdminRegistrationsPage() {
             )}
           </CardContent>
         </Card>
+      </TabsContent>
 
-        {/* Gallery management */}
+      {/* TAB 2: COURSE MANAGEMENT */}
+      <TabsContent value="courses" className="space-y-6 m-0">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  Course Catalog & Tuition Management
+                </CardTitle>
+                <CardDescription>
+                  Configure course titles, fees, seat deposits, duration, highlights, and active landing page visibility.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={fetchCourses} disabled={coursesLoading}>
+                  <RefreshCw className={`w-4 h-4 mr-1 ${coursesLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+                <Button size="sm" onClick={handleOpenCreateCourse}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Course
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {coursesLoading && courses.length === 0 ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+                <p className="mt-2 text-sm text-muted-foreground">Loading course catalog...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {courses.map((course) => (
+                  <Card
+                    key={course.id}
+                    className={`border transition-all flex flex-col justify-between ${
+                      course.isActive === false
+                        ? "opacity-60 bg-muted/20 border-border/50"
+                        : "border-border/80 shadow-xs hover:border-primary/50"
+                    }`}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                          {course.category}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-block w-2.5 h-2.5 rounded-full ${
+                              course.isActive !== false ? "bg-emerald-500" : "bg-amber-500"
+                            }`}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {course.isActive !== false ? "Open" : "Unavailable"}
+                          </span>
+                        </div>
+                      </div>
+                      <CardTitle className="text-lg line-clamp-1">{course.title}</CardTitle>
+                      {course.subtitle && (
+                        <CardDescription className="line-clamp-2 text-xs">
+                          {course.subtitle}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-card/60 border border-border/40 text-xs">
+                        <div>
+                          <p className="text-muted-foreground">Total Fee</p>
+                          <p className="font-bold text-sm text-foreground">GHS {course.totalFee}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Seat Deposit</p>
+                          <p className="font-bold text-sm text-primary">GHS {course.requiredDeposit}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Duration</p>
+                          <p className="font-medium text-foreground">{course.duration}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">AI Tools</p>
+                          <p className="font-medium text-foreground">{course.hasAiIncluded ? "Yes" : "No"}</p>
+                        </div>
+                      </div>
+
+                      {course.badge && (
+                        <div className="inline-block px-2.5 py-0.5 rounded-full bg-accent/15 text-accent text-[11px] font-medium border border-accent/30">
+                          {course.badge}
+                        </div>
+                      )}
+
+                      <div className="pt-2 border-t flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id={`toggle-${course.id}`}
+                            checked={course.isActive !== false}
+                            onCheckedChange={() => handleToggleCourseActive(course)}
+                          />
+                          <Label htmlFor={`toggle-${course.id}`} className="text-xs cursor-pointer">
+                            {course.isActive !== false ? "Open for enrollment" : "Marked Unavailable"}
+                          </Label>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => handleOpenEditCourse(course)}>
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* TAB 3: GALLERY MANAGEMENT */}
+      <TabsContent value="gallery" className="space-y-6 m-0">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -883,6 +1244,185 @@ export default function AdminRegistrationsPage() {
             </div>
           </CardContent>
         </Card>
+      </TabsContent>
+    </Tabs>
+
+        {/* COURSE EDIT / CREATE DIALOG */}
+        <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {courseDialogMode === "create" ? "Add New Course Program" : `Edit Course: ${courseForm.title}`}
+              </DialogTitle>
+              <DialogDescription>
+                Update pricing, deposit requirements, duration, badge, and live visibility on the website.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSaveCourse} className="space-y-4 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cf-id">Course Identifier (Slug)</Label>
+                  <Input
+                    id="cf-id"
+                    value={courseForm.id}
+                    disabled={courseDialogMode === "edit"}
+                    onChange={(e) => setCourseForm({ ...courseForm, id: e.target.value })}
+                    placeholder="e.g. cloud-computing-aws"
+                    required
+                  />
+                  <p className="text-[11px] text-muted-foreground">Unique URL key, e.g. /register?course=slug</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="cf-category">Category</Label>
+                  <select
+                    id="cf-category"
+                    value={courseForm.category}
+                    onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value as any })}
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm font-medium"
+                  >
+                    <option value="Hardware">Hardware & Engineering</option>
+                    <option value="Productivity">Office Productivity</option>
+                    <option value="Software">Software Engineering / Web</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="cf-title">Course Title</Label>
+                <Input
+                  id="cf-title"
+                  value={courseForm.title}
+                  onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                  placeholder="e.g. Advanced Practical Computer Networking"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="cf-subtitle">Subtitle / Program Summary</Label>
+                <Input
+                  id="cf-subtitle"
+                  value={courseForm.subtitle}
+                  onChange={(e) => setCourseForm({ ...courseForm, subtitle: e.target.value })}
+                  placeholder="Key tagline displayed on catalog cards"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cf-fee">Total Fee (GHS)</Label>
+                  <Input
+                    id="cf-fee"
+                    type="number"
+                    min="0"
+                    step="10"
+                    value={courseForm.totalFee}
+                    onChange={(e) => setCourseForm({ ...courseForm, totalFee: Number(e.target.value) })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="cf-deposit">Required Deposit (GHS)</Label>
+                  <Input
+                    id="cf-deposit"
+                    type="number"
+                    min="0"
+                    step="10"
+                    value={courseForm.requiredDeposit}
+                    onChange={(e) => setCourseForm({ ...courseForm, requiredDeposit: Number(e.target.value) })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="cf-duration">Duration</Label>
+                  <Input
+                    id="cf-duration"
+                    value={courseForm.duration}
+                    onChange={(e) => setCourseForm({ ...courseForm, duration: e.target.value })}
+                    placeholder="e.g. 4 Weeks"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="cf-badge">Highlight Badge</Label>
+                <Input
+                  id="cf-badge"
+                  value={courseForm.badge}
+                  onChange={(e) => setCourseForm({ ...courseForm, badge: e.target.value })}
+                  placeholder="e.g. Flagship Program, High Demand, Most Popular"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="cf-highlights">Key Highlights & Takeaways (One per line)</Label>
+                <Textarea
+                  id="cf-highlights"
+                  rows={4}
+                  value={courseForm.highlights}
+                  onChange={(e) => setCourseForm({ ...courseForm, highlights: e.target.value })}
+                  placeholder="Enter each bullet point on a new line..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/40 rounded-xl border border-border/50">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="cf-active"
+                    checked={courseForm.isActive}
+                    onCheckedChange={(checked) => setCourseForm({ ...courseForm, isActive: checked })}
+                  />
+                  <Label htmlFor="cf-active" className="text-xs cursor-pointer">
+                    Open for Registration
+                  </Label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="cf-ai"
+                    checked={courseForm.hasAiIncluded}
+                    onCheckedChange={(checked) => setCourseForm({ ...courseForm, hasAiIncluded: checked })}
+                  />
+                  <Label htmlFor="cf-ai" className="text-xs cursor-pointer">
+                    AI Tools Included
+                  </Label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="cf-backend"
+                    checked={courseForm.hasBackendOption}
+                    onCheckedChange={(checked) => setCourseForm({ ...courseForm, hasBackendOption: checked })}
+                  />
+                  <Label htmlFor="cf-backend" className="text-xs cursor-pointer">
+                    Backend Track Option
+                  </Label>
+                </div>
+              </div>
+
+              <DialogFooter className="pt-3">
+                <Button type="button" variant="outline" onClick={() => setCourseDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={courseSaving}>
+                  {courseSaving ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Course"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )

@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     // allow Next.js to optimize local images and serve modern formats
     unoptimized: false,
@@ -20,7 +17,7 @@ const nextConfig = {
     const csp = [
       "default-src 'self'",
       "base-uri 'self'",
-      "img-src 'self' data: https:",
+      "img-src 'self' data: blob: https://cchdhxvqfsmyktljtyaq.supabase.co",
       `style-src 'self' 'unsafe-inline'${isProd ? " https://fonts.googleapis.com" : ""}`,
       `font-src 'self' data:${isProd ? " https://fonts.gstatic.com" : ""}`,
       `script-src 'self' https://va.vercel-scripts.com${isProd ? " 'unsafe-inline'" : " 'unsafe-inline' 'unsafe-eval'"}`,
@@ -39,6 +36,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          ...(isProd ? [{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }] : []),
         ],
       },
     ]

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast"
 import { CheckCircle, AlertCircle, Loader2, Cpu, FileText, Code2, ShieldCheck } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { COURSES_CATALOG, ALL_COURSES, getCourseById } from "@/lib/courses-data"
+import { COURSES_CATALOG, ALL_COURSES, getCourseById, Course } from "@/lib/courses-data"
 
 function RegistrationFormContent() {
   const searchParams = useSearchParams()
@@ -23,8 +23,20 @@ function RegistrationFormContent() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [coursesList, setCoursesList] = useState<Course[]>(ALL_COURSES)
   const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCourseId)
   const [backendPreference, setBackendPreference] = useState<string>("nodejs")
+
+  useEffect(() => {
+    fetch("/api/courses", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.courses) && data.courses.length > 0) {
+          setCoursesList(data.courses)
+        }
+      })
+      .catch((err) => console.warn("Failed to fetch dynamic courses for registration:", err))
+  }, [])
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -47,7 +59,7 @@ function RegistrationFormContent() {
     }
   }, [queryCourseParam])
 
-  const selectedCourse = getCourseById(selectedCourseId)
+  const selectedCourse = coursesList.find((c) => c.id === selectedCourseId) || getCourseById(selectedCourseId)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -65,6 +77,9 @@ function RegistrationFormContent() {
 
     if (currentStep === 1) {
       if (!selectedCourseId) newErrors.selectedCourseId = "Please select a training program"
+      if (selectedCourse && selectedCourse.isActive === false) {
+        newErrors.selectedCourseId = "The selected course is currently unavailable for registration. Please choose an open program."
+      }
       if (!formData.full_name) newErrors.full_name = "Full name is required"
       if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Enter a valid email address"
       if (!formData.phone_number || !/^\d{10}$/.test(formData.phone_number))
@@ -140,8 +155,6 @@ function RegistrationFormContent() {
         course_selection: selectedCourse.title,
         course_id: selectedCourse.id,
         backend_preference: selectedCourse.hasBackendOption ? (backendPreference === "nodejs" ? "Node.js/Express & MySQL" : "PHP & MySQL") : undefined,
-        total_fee: selectedCourse.totalFee,
-        required_deposit: selectedCourse.requiredDeposit,
         previous_knowledge: formData.previous_knowledge === "yes",
         education_level: formData.education_level,
         experience_level: formData.experience_level,
@@ -161,21 +174,7 @@ function RegistrationFormContent() {
 
       const registrationId = json.id
 
-      // Send automated student confirmation & admin notification email asynchronously
-      fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          full_name: formData.full_name,
-          course_selection: selectedCourse.title,
-          backend_preference: registrationData.backend_preference,
-          required_deposit: selectedCourse.requiredDeposit,
-          phone_number: formData.phone_number,
-          whatsapp_number: formData.whatsapp_number,
-          location: formData.location,
-        }),
-      }).catch((err) => console.error("Confirmation email background error:", err))
+      // Confirmation & admin notification emails are sent server-side by the create endpoint.
 
       // Navigate to deposit payment page
       router.push(`/register/payment?registrationId=${registrationId}`)
@@ -222,46 +221,79 @@ function RegistrationFormContent() {
 
                 {/* Course Selection Cards */}
                 <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Select Training Program</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold">Select Training Program</Label>
+                    {errors.selectedCourseId && (
+                      <p className="text-xs text-destructive font-medium">{errors.selectedCourseId}</p>
+                    )}
+                  </div>
+
+                  {selectedCourse.isActive === false && (
+                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs flex items-center gap-2 font-medium">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                      <span>This program is currently unavailable for new enrollment. Please choose an open program below.</span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 gap-3 max-h-[380px] overflow-y-auto pr-1">
-                    {ALL_COURSES.map((course) => (
-                      <div
-                        key={course.id}
-                        onClick={() => setSelectedCourseId(course.id)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          selectedCourseId === course.id
-                            ? "border-primary bg-primary/10 shadow-md"
-                            : "border-border/60 bg-muted/20 hover:border-primary/50"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3">
-                            <input
-                              type="radio"
-                              name="course-radio"
-                              checked={selectedCourseId === course.id}
-                              onChange={() => setSelectedCourseId(course.id)}
-                              className="h-4 w-4 text-primary shrink-0 mt-1"
-                            />
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-bold text-sm sm:text-base">{course.title}</p>
-                                {course.hasAiIncluded && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                    🤖 AI Included
-                                  </span>
-                                )}
+                    {coursesList.map((course) => {
+                      const isAvail = course.isActive !== false
+                      return (
+                        <div
+                          key={course.id}
+                          onClick={() => {
+                            if (isAvail) setSelectedCourseId(course.id)
+                          }}
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            !isAvail
+                              ? "opacity-55 border-border/40 bg-muted/40 cursor-not-allowed"
+                              : selectedCourseId === course.id
+                              ? "border-primary bg-primary/10 shadow-md cursor-pointer"
+                              : "border-border/60 bg-muted/20 hover:border-primary/50 cursor-pointer"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="radio"
+                                name="course-radio"
+                                disabled={!isAvail}
+                                checked={selectedCourseId === course.id}
+                                onChange={() => {
+                                  if (isAvail) setSelectedCourseId(course.id)
+                                }}
+                                className="h-4 w-4 text-primary shrink-0 mt-1 disabled:opacity-30"
+                              />
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className={`font-bold text-sm sm:text-base ${!isAvail ? "text-muted-foreground line-through" : ""}`}>
+                                    {course.title}
+                                  </p>
+                                  {!isAvail && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                                      Course Unavailable
+                                    </span>
+                                  )}
+                                  {course.hasAiIncluded && isAvail && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                      🤖 AI Included
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {course.duration} • {course.category} Track
+                                  {!isAvail && " • Enrollment Closed"}
+                                </p>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{course.duration} • {course.category} Track</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-sm font-bold text-foreground block">GHS {course.totalFee}</span>
+                              <span className="text-xs text-primary font-medium">Deposit: GHS {course.requiredDeposit}</span>
                             </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-sm font-bold text-foreground block">GHS {course.totalFee}</span>
-                            <span className="text-xs text-primary font-medium">Deposit: GHS {course.requiredDeposit}</span>
-                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
 
